@@ -1,0 +1,18 @@
+{
+  "id": "pF86czUGQR9pDrjl",
+  "name": "Postgres account",
+  "type": "postgres",
+  "data": {
+    "host": "",
+    "database": "",
+    "user": "",
+    "password": ""
+  },
+  "ownedBy": {
+    "type": "personal",
+    "projectId": "4gZXsoo5v3SNQN13",
+    "projectName": "卷梦 书 <3424771506@qq.com>",
+    "personalEmail": "3424771506@qq.com"
+  },
+  "isGlobal": false
+}

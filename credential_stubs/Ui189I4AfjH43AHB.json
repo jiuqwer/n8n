@@ -1,0 +1,16 @@
+{
+  "id": "Ui189I4AfjH43AHB",
+  "name": "Claude Code 蓝星",
+  "type": "openAiApi",
+  "data": {
+    "apiKey": "",
+    "url": ""
+  },
+  "ownedBy": {
+    "type": "personal",
+    "projectId": "4gZXsoo5v3SNQN13",
+    "projectName": "卷梦 书 <3424771506@qq.com>",
+    "personalEmail": "3424771506@qq.com"
+  },
+  "isGlobal": false
+}

@@ -1,0 +1,18 @@
+{
+  "id": "rMBklesTdH2u3VVk",
+  "name": "SMTP account",
+  "type": "smtp",
+  "data": {
+    "user": "",
+    "password": "",
+    "host": "",
+    "hostName": ""
+  },
+  "ownedBy": {
+    "type": "personal",
+    "projectId": "4gZXsoo5v3SNQN13",
+    "projectName": "卷梦 书 <3424771506@qq.com>",
+    "personalEmail": "3424771506@qq.com"
+  },
+  "isGlobal": false
+}
