@@ -124,7 +124,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -304,
+        112,
         704
       ],
       "id": "9d631120-2df4-449c-9d33-c1b4a2d67318",
@@ -155,7 +155,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -80,
+        336,
         704
       ],
       "id": "d5f1598c-5c5d-4883-a8ca-d3d491784293",
@@ -180,7 +180,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        144,
+        560,
         224
       ],
       "id": "77c5e0a9-c619-4b08-ad5d-0edcc3bdf350",
@@ -210,7 +210,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        208,
+        624,
         592
       ],
       "id": "c514e018-5d25-4808-8949-cfd7be651d83",
@@ -231,7 +231,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
       "position": [
-        208,
+        624,
         400
       ],
       "id": "a92825b5-0038-428f-a572-a4de77d83ddc",
@@ -249,7 +249,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
       "position": [
-        208,
+        624,
         0
       ],
       "id": "f4106e78-e109-4162-8c96-17e397582183",
@@ -267,7 +267,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
       "position": [
-        608,
+        1024,
         0
       ],
       "id": "0ec5373c-95cd-43e4-b18c-22a27ec0eab2",
@@ -292,7 +292,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        624,
+        1040,
         224
       ],
       "id": "035c6bda-03f9-400e-96c0-e2c1a50c98ca",
@@ -321,7 +321,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        208,
+        624,
         1088
       ],
       "id": "a44bdf2a-2d94-4d35-b063-faa85819c707",
@@ -347,7 +347,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        624,
+        1040,
         624
       ],
       "id": "68c6a0b7-aad8-4223-8e8b-d4daf0fc27cf",
@@ -368,7 +368,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
       "position": [
-        208,
+        624,
         912
       ],
       "id": "25fb398b-bfd7-41ac-9d84-641582d914d6",
@@ -392,7 +392,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        624,
+        1040,
         1120
       ],
       "id": "12917130-2aa3-4879-ab35-36d5acf71341",
@@ -426,7 +426,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
       "position": [
-        608,
+        1024,
         400
       ],
       "id": "6755a8a1-c556-4aac-a8de-a13dd1d31901",
@@ -444,7 +444,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
       "position": [
-        608,
+        1024,
         912
       ],
       "id": "1ab550e3-c044-45cb-8e1d-0b7ce9418452",
@@ -463,7 +463,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        960,
+        1376,
         496
       ],
       "id": "1583219b-c313-4659-bd98-787d5870a02c",
@@ -476,7 +476,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1184,
+        1600,
         512
       ],
       "id": "7407b1e0-1871-4b18-a475-287d938741a6",
@@ -493,7 +493,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        1408,
+        1824,
         832
       ],
       "id": "477b93d9-8b56-488e-9277-479bfa1ff575",
@@ -543,7 +543,7 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -1360,
+        -800,
         800
       ],
       "id": "a2ccf9e9-040f-4693-b08f-e78e9a34d12d",
@@ -581,7 +581,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
-        1824,
+        2240,
         832
       ],
       "id": "d09f2cfa-b84c-4f62-872a-da9120314ba2",
@@ -640,7 +640,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1616,
+        2032,
         832
       ],
       "id": "0099bfd0-d429-4dab-a8d5-2c44a97767fb",
@@ -653,7 +653,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1568,
+        -1152,
         608
       ],
       "id": "f2864279-5784-4393-b78d-de24a787bc08",
@@ -740,13 +740,13 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=你是一个专业的体育数据精简专家。\n\n【任务】\n请阅读输入的比赛详情原始数据，将其转化为一段简明、逻辑清晰且不遗漏关键信息的“比赛前瞻情报”。\n\n【处理要求】\n1. 伤停情报：重点列出主力球员的缺阵情况及对攻防的具体影响。\n2. 历史交锋：提取近5次对阵的胜负规律及进球数趋势。\n3. 近期表现：总结双方最近3场比赛的得失球特征（如：防线不稳、进攻便秘等）。\n4. 核心统计：仅保留与“总进球数”高度相关的关键指标（如：大球率、BTTS率）。\n\n【数据源】\n{{ JSON.stringify($('减少toke').item.json) }}\n\n【强制输出要求】\n1. 使用简短的要点（Bullet Points）。\n2. 不要包含开场白、结束语或任何分析建议，只提供整理后的事实描述。\n3. 如果数据缺失，请直接说明“该项数据缺失”。",
+        "text": "=# Role\n你是一个专精于“进球数模型审计”的首席情报官。你的任务是将多维度的比赛原始事实转化为一份深度、无偏见的“比赛前瞻审计报告”。\n\n# 核心情报源\n1. 【精简情报 (来自 Gemini 蒸馏)】：\n{{ $('AI 智能蒸馏 (Gemini)').item.json.output }}\n\n2. 【第三方大数据预测参考】：\n{{ $('解析进球数').item.json.external_goals_desc }}\n\n3. 【系统检索：历史复盘教训】：\n{{ $('Get AI Memory').all().length > 0 ? JSON.stringify($('Get AI Memory').all().map(i => i.json.lesson_learned)) : \"本场无相关历史记录\" }}\n\n# 审计要求\n请将上述信息重新逻辑化，输出为以下结构：\n- **伤停与防线完整度**：基于情报判断防守端的具体风险点。\n- **历史交锋统计逻辑**：总结历史对阵中进球数的分布规律（大球/小球趋势）。\n- **战术对碰推演**：结合近期得失球特征，判断本场比赛是“进攻转化率高”还是“防守僵持”。\n- **风险对冲提醒**：如果历史教训提及了该队，请务必作为重点警示。\n\n# 强制输出格式\n- 仅提供事实描述和逻辑推演。\n- 使用 Bullet Points。\n- 严禁给出“建议买什么”，只提供支撑决策的审计报告。\n- 如果某项数据缺失，请标注“该项数据缺失”。",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3,
       "position": [
-        -944,
+        -528,
         800
       ],
       "id": "37251718-feb8-4dfa-9007-4af2493bf398",
@@ -771,7 +771,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -976,
+        -560,
         960
       ],
       "id": "fb05adda-c972-44b2-bc89-dbf5a7978d2e",
@@ -851,7 +851,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -1776,
+        -1248,
         800
       ],
       "id": "1939704a-c63d-469d-8ca0-d0fbfafc3a97",
@@ -866,7 +866,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1568,
+        -1056,
         800
       ],
       "id": "02442827-b6e3-4b07-a6ae-88095141756e",
@@ -874,16 +874,57 @@
     },
     {
       "parameters": {
-        "jsCode": "// 1. 显式从“获取比赛详情”节点获取数据\n// 注意：n8n 的 HTTP Request 节点默认已将 body 解析为对象\nconst res = $('获取比赛详情').item.json.result;\n\nif (!res) {\n  throw new Error(\"未能在 '获取比赛详情' 节点中找到 result 数据，请检查 API 返回格式\");\n}\n\n// --- 动态字段提取 ---\nconst dynamicLeagueName = res.vsMatches?.matches[0]?.leagueNameFull || \"未知联赛\"; \n\nconst findTech = (name, side) => {\n  const item = res.techItem?.lastTechStat?.itemList?.find(i => i.name === name);\n  return item ? item[side] : { value: 0, text: \"0\" };\n};\n\n// 动态提取排名和近况\nconst homePointsAll = res.currentPoints?.homePoints?.points?.find(p => p.pointsKind === \"ALL\");\nconst awayPointsAll = res.currentPoints?.awayPoints?.points?.find(p => p.pointsKind === \"ALL\");\nconst homePointsNear = res.currentPoints?.homePoints?.points?.find(p => p.pointsKind === \"NEAR\");\nconst awayPointsNear = res.currentPoints?.awayPoints?.points?.find(p => p.pointsKind === \"NEAR\");\n\n// 2. 构造并返回对象\nreturn {\n  \"match_info\": {\n    \"league\": dynamicLeagueName,\n    \"season\": res.currentPoints?.homePoints?.curSeason,\n    \"home_team\": res.currentPoints?.homePoints?.teamName,\n    \"away_team\": res.currentPoints?.awayPoints?.teamName,\n    \"referee\": {\n      \"name\": res.analysisItem?.referee?.referee?.name?.cn || \"未知\",\n      \"avg_yellow_cards\": res.analysisItem?.referee?.avgYellow?.avgNumber || 0\n    }\n  },\n  \"league_standings\": {\n    \"home\": {\n      \"rank\": homePointsAll?.rank,\n      \"points\": homePointsAll?.point,\n      \"recent_form\": homePointsNear ? `${homePointsNear.win}胜${homePointsNear.draw}平${homePointsNear.loss}负` : \"无数据\",\n      \"goals_avg\": res.analysisItem?.statusCon?.constract?.find(c => c.consType === \"goal\")?.homeAvgAll\n    },\n    \"away\": {\n      \"rank\": awayPointsAll?.rank,\n      \"points\": awayPointsAll?.point,\n      \"recent_form\": awayPointsNear ? `${awayPointsNear.win}胜${awayPointsNear.draw}平${awayPointsNear.loss}负` : \"无数据\",\n      \"goals_avg\": res.analysisItem?.statusCon?.constract?.find(c => c.consType === \"goal\")?.awayAvgAll\n    }\n  },\n  \"technical_stats_comparison\": {\n    \"metric\": [\"进球\", \"失球\", \"被射门\", \"角球\", \"控球率\"],\n    \"home\": [\n      findTech(\"进球\", \"home\").value,\n      findTech(\"失球\", \"home\").value,\n      findTech(\"被射门\", \"home\").value,\n      findTech(\"角球\", \"home\").value,\n      findTech(\"控球率\", \"home\").text\n    ],\n    \"away\": [\n      findTech(\"进球\", \"away\").value,\n      findTech(\"失球\", \"away\").value,\n      findTech(\"被射门\", \"away\").value,\n      findTech(\"角球\", \"away\").value,\n      findTech(\"控球率\", \"away\").text\n    ]\n  },\n  \"expert_recommendation\": (res.xinShuiRecommend?.recommend?.cn || \"\").split('。')[0] + \"。\"\n};"
+        "jsCode": "/**\n * 足球数据脱水脚本 (JS)\n * 目标：删除多语言、冗余统计、未来赛程，仅保留进球数预测核心指标\n */\nconst input = $input.all();\nconst output = [];\n\nfor (const item of input) {\n    let rawData = item.json.data;\n    // 自动兼容字符串或对象格式\n    let body = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;\n    let res = body.result || {};\n    let analysis = res.analysisItem || {};\n\n    // 1. 内部处理：平铺多语言，只取中文\n    const flattenPlayer = (p) => ({\n        name: p.name?.cn || \"未知\",\n        pos: p.position?.cn || \"未知\",\n        reason: p.reason || \"未知\"\n    });\n\n    // 2. 内部处理：简化历史交锋，剔除极其占空间的赔率历史\n    const simplifyMatch = (m) => ({\n        league: m.leagueName || m.leagueNameFull,\n        home: m.homeTeam?.name,\n        away: m.awayTeam?.name,\n        score: `${m.homeTeam?.score}-${m.awayTeam?.score}`,\n        corners: `${m.homeTeam?.corner}-${m.awayTeam?.corner}`,\n        ou_res: m.ou?.[0]?.result // 只留大小球结果\n    });\n\n    // 3. 构建脱水后的核心对象\n    const dehydrated = {\n        // 核心对阵信息\n        match: {\n            home: analysis.constract?.normal?.[0]?.teamName || \"主队\",\n            away: analysis.constract?.normal?.[1]?.teamName || \"客队\",\n            referee: analysis.referee?.referee?.name?.cn || \"未知\"\n        },\n        // 关键进球数技术统计 (过滤掉黄牌、犯规等次要信息)\n        tech_stats: (res.techItem?.lastTechStat?.itemList || [])\n            .filter(i => [\"进球\", \"失球\", \"被射门\", \"控球率\", \"角球\"].includes(i.name))\n            .map(i => ({ name: i.name, home: i.home.text, away: i.away.text })),\n        \n        // 伤停情报 (删除 15 种多余语言)\n        injuries: {\n            home: (analysis.injury?.homeInjury || []).map(flattenPlayer),\n            away: (analysis.injury?.awayInjury || []).map(flattenPlayer)\n        },\n        \n        // 近期战绩 (删除未来赛程 future3Matches)\n        history: {\n            vs: (analysis.vsMatches?.matches || []).slice(0, 6).map(simplifyMatch),\n            home_near: (analysis.nearMatches?.homeMatches?.matches || []).slice(0, 6).map(simplifyMatch),\n            away_near: (analysis.nearMatches?.awayMatches?.matches || []).slice(0, 6).map(simplifyMatch)\n        },\n        \n        // 深度情报与专家分析\n        expert_view: analysis.xinShuiRecommend?.recommend?.cn || \"\",\n        intelligence: (analysis.preInfo?.preInfos || [])\n            .filter(i => i.content)\n            .map(i => i.content).join(\"\\n\")\n    };\n\n    output.push({ json: dehydrated });\n}\n\nreturn output;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1152,
+        -1776,
         800
       ],
-      "id": "b1b50364-ea8e-4b33-95a8-4409771a0740",
-      "name": "减少toke"
+      "id": "297068c0-0dfa-4ef3-948f-bb3f1e386f33",
+      "name": "足球数据脱水脚本"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gemini-3-flash-preview",
+          "mode": "list",
+          "cachedResultName": "gemini-3-flash-preview"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1584,
+        976
+      ],
+      "id": "e7bbba44-5b35-4d74-b9aa-566ec3e9fba9",
+      "name": "OpenAI Chat Model6",
+      "credentials": {
+        "openAiApi": {
+          "id": "h8jtCuruixgdtycY",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=你是一个专业的足球比赛情报分析员。\n请根据以下脱水后的数据，总结出一份针对“总进球数”预测的精炼报告。\n\n### 原始情报\n{{ JSON.stringify($json) }}\n### 任务要求\n1. **火力评估**：分析双方近 10 场的场均进球数。\n2. **防线预警**：根据伤病名单（特别是中卫和门将）评估防守完整度。\n3. **交锋特征**：分析双方历史对阵中“大球”和“小球”的比例。\n\n请直接输出分析结论，分点陈述，严禁废话。",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1568,
+        800
+      ],
+      "id": "e7049140-ca9f-402f-a6bb-841fb441c272",
+      "name": "AI 智能蒸馏 (Gemini)"
     }
   ],
   "connections": {
@@ -1161,7 +1202,7 @@
       "main": [
         [
           {
-            "node": "减少toke",
+            "node": "AI Agent",
             "type": "main",
             "index": 0
           }
@@ -1194,7 +1235,7 @@
       "main": [
         [
           {
-            "node": "获取外部模型网页",
+            "node": "足球数据脱水脚本",
             "type": "main",
             "index": 0
           }
@@ -1256,11 +1297,33 @@
         ]
       ]
     },
-    "减少toke": {
+    "足球数据脱水脚本": {
       "main": [
         [
           {
-            "node": "AI Agent",
+            "node": "AI 智能蒸馏 (Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model6": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI 智能蒸馏 (Gemini)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI 智能蒸馏 (Gemini)": {
+      "main": [
+        [
+          {
+            "node": "获取外部模型网页",
             "type": "main",
             "index": 0
           }
@@ -1276,7 +1339,7 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
   "triggerCount": 1,
-  "versionId": "6ea9d3f3-a4c2-4ec4-b376-0e0c849f8ec1",
+  "versionId": "74b3d9d9-7c85-48b4-a2c6-c6da0a4c4b57",
   "owner": {
     "type": "personal",
     "projectId": "4gZXsoo5v3SNQN13",
