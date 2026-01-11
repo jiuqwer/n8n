@@ -50,7 +50,7 @@
             },
             {
               "name": "sec-ch-ua",
-              "value": "\"Chromium\";v=\"142\", \"Microsoft Edge\";v=\"142\", \"Not_A Brand\";v=\"99\""
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
             },
             {
               "name": "sec-ch-ua-mobile",
@@ -74,7 +74,7 @@
             },
             {
               "name": "user-agent",
-              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0"
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0"
             }
           ]
         },
@@ -87,7 +87,10 @@
         704
       ],
       "id": "a0358435-4a21-4859-abf3-9bb7aafc820b",
-      "name": "HTTP Request"
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5
     },
     {
       "parameters": {
@@ -185,6 +188,9 @@
       ],
       "id": "77c5e0a9-c619-4b08-ad5d-0edcc3bdf350",
       "name": "OpenAI Chat Model",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
       "credentials": {
         "openAiApi": {
           "id": "h8jtCuruixgdtycY",
@@ -215,6 +221,8 @@
       ],
       "id": "c514e018-5d25-4808-8949-cfd7be651d83",
       "name": "OpenAI Chat Model1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "openAiApi": {
           "id": "Ui189I4AfjH43AHB",
@@ -280,9 +288,9 @@
       "parameters": {
         "model": {
           "__rl": true,
-          "value": "[ais]gemini-2.5-pro-thinking",
+          "value": "gemini-2.5-pro-preview-03-25",
           "mode": "list",
-          "cachedResultName": "[ais]gemini-2.5-pro-thinking"
+          "cachedResultName": "gemini-2.5-pro-preview-03-25"
         },
         "responsesApiEnabled": false,
         "options": {
@@ -297,6 +305,8 @@
       ],
       "id": "035c6bda-03f9-400e-96c0-e2c1a50c98ca",
       "name": "OpenAI Chat Model2",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "openAiApi": {
           "id": "h8jtCuruixgdtycY",
@@ -326,6 +336,9 @@
       ],
       "id": "a44bdf2a-2d94-4d35-b063-faa85819c707",
       "name": "OpenAI Chat Model3",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5,
       "credentials": {
         "openAiApi": {
           "id": "h8jtCuruixgdtycY",
@@ -352,6 +365,9 @@
       ],
       "id": "68c6a0b7-aad8-4223-8e8b-d4daf0fc27cf",
       "name": "OpenAI Chat Model4",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 4,
       "credentials": {
         "openAiApi": {
           "id": "h8jtCuruixgdtycY",
@@ -397,6 +413,8 @@
       ],
       "id": "12917130-2aa3-4879-ab35-36d5acf71341",
       "name": "OpenAI Chat Model5",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "openAiApi": {
           "id": "h8jtCuruixgdtycY",
@@ -560,9 +578,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "tbfQUP950NRg4rQf",
+          "value": "Jy8WM9vZfplR4SQk",
           "mode": "list",
-          "cachedResultUrl": "/workflow/tbfQUP950NRg4rQf",
+          "cachedResultUrl": "/workflow/Jy8WM9vZfplR4SQk",
           "cachedResultName": "Match_Review_Subworkflow_Postgres"
         },
         "workflowInputs": {
@@ -653,8 +671,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1152,
-        608
+        -2112,
+        640
       ],
       "id": "f2864279-5784-4393-b78d-de24a787bc08",
       "name": "设置今日上锁"
@@ -735,7 +753,8 @@
       "id": "b792cef9-f00c-4212-9ceb-847ec9b720a7",
       "name": "获取比赛详情",
       "retryOnFail": true,
-      "waitBetweenTries": 5000
+      "waitBetweenTries": 5000,
+      "maxTries": 5
     },
     {
       "parameters": {
@@ -857,7 +876,8 @@
       "id": "1939704a-c63d-469d-8ca0-d0fbfafc3a97",
       "name": "获取外部模型网页",
       "retryOnFail": true,
-      "waitBetweenTries": 5000
+      "waitBetweenTries": 5000,
+      "maxTries": 5
     },
     {
       "parameters": {
@@ -1339,7 +1359,7 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
   "triggerCount": 1,
-  "versionId": "74b3d9d9-7c85-48b4-a2c6-c6da0a4c4b57",
+  "versionId": "f17ab1a7-0e7c-4b8f-85fc-c27d19bf8c0b",
   "owner": {
     "type": "personal",
     "projectId": "4gZXsoo5v3SNQN13",
