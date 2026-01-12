@@ -187,8 +187,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        336,
-        192
+        344,
+        224
       ],
       "id": "77c5e0a9-c619-4b08-ad5d-0edcc3bdf350",
       "name": "OpenAI Chat Model",
@@ -306,7 +306,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        768,
+        760,
         224
       ],
       "id": "035c6bda-03f9-400e-96c0-e2c1a50c98ca",
@@ -337,8 +337,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        320,
-        1104
+        344,
+        1128
       ],
       "id": "a44bdf2a-2d94-4d35-b063-faa85819c707",
       "name": "OpenAI Chat Model3",
@@ -419,8 +419,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        672,
-        1104
+        760,
+        1128
       ],
       "id": "12917130-2aa3-4879-ab35-36d5acf71341",
       "name": "OpenAI Chat Model5",
@@ -474,7 +474,7 @@
       "typeVersion": 3,
       "position": [
         688,
-        912
+        904
       ],
       "id": "1ab550e3-c044-45cb-8e1d-0b7ce9418452",
       "name": "投注者3",
@@ -932,8 +932,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -1520,
-        720
+        -1480,
+        728
       ],
       "id": "e7bbba44-5b35-4d74-b9aa-566ec3e9fba9",
       "name": "OpenAI Chat Model6",
@@ -1004,8 +1004,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        192,
-        1120
+        472,
+        1128
       ],
       "id": "1cf27045-6b22-40b1-8e90-6d545dc08648",
       "name": "OpenAI Chat Model8",
@@ -1030,8 +1030,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        192,
-        208
+        472,
+        224
       ],
       "id": "da7e72aa-4b8c-4242-9f7e-a54af758bd7c",
       "name": "OpenAI Chat Model9",
@@ -1056,8 +1056,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -1632,
-        720
+        -1352,
+        728
       ],
       "id": "e0455c6c-2164-471b-bc8b-74f0df4de489",
       "name": "OpenAI Chat Model10",
@@ -1478,7 +1478,7 @@
           {
             "node": "claude-opus-4-5-20251101-thinking",
             "type": "ai_languageModel",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -1489,7 +1489,7 @@
           {
             "node": "grok-4-fast-reasoning",
             "type": "ai_languageModel",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -1500,7 +1500,7 @@
           {
             "node": "gemini-3-pro-preview-thinking",
             "type": "ai_languageModel",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -1511,7 +1511,7 @@
           {
             "node": "AI 智能蒸馏 (Gemini)",
             "type": "ai_languageModel",
-            "index": 0
+            "index": 1
           }
         ]
       ]
@@ -1525,7 +1525,7 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
   "triggerCount": 1,
-  "versionId": "fae4d97b-ee77-4c80-a036-3ec2b08471e7",
+  "versionId": "f5cfd96a-e7ac-4b83-804e-c7ffba9a9c4a",
   "owner": {
     "type": "personal",
     "projectId": "4gZXsoo5v3SNQN13",
