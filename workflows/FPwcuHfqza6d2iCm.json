@@ -587,19 +587,19 @@
             {
               "id": "a3d62746-8a01-4c07-969d-55a8a7438b9c",
               "name": "matchTime",
-              "value": "={{ $('Loop Over Items').item.json.matchDate }}",
+              "value": "={{ $('Loop Over Items').first().json.matchDate }}",
               "type": "string"
             },
             {
               "id": "6e381ac9-179e-45de-b02e-be9434b77345",
               "name": "homeTeam",
-              "value": "={{ $('Loop Over Items').item.json['主队'] }}",
+              "value": "={{ $('Loop Over Items').first().json['主队'] }}",
               "type": "string"
             },
             {
               "id": "be82282f-d696-4b47-8ca9-b5b8d4f16467",
               "name": "awayTeam",
-              "value": "={{ $('Loop Over Items').item.json['客队'] }}",
+              "value": "={{ $('Loop Over Items').first().json['客队'] }}",
               "type": "string"
             },
             {
@@ -611,13 +611,13 @@
             {
               "id": "87811c39-2c24-4d5c-aa02-4efd5671c39b",
               "name": "=league",
-              "value": "={{ $('Loop Over Items').item.json['联赛'] }}",
+              "value": "={{ $('Loop Over Items').first().json['联赛'] }}",
               "type": "string"
             },
             {
               "id": "70df0b1c-af10-4187-b4f5-0deddf8d9d7e",
               "name": "=matchCode",
-              "value": "={{ $('Loop Over Items').item.json.matchCode }}",
+              "value": "={{ $('Loop Over Items').first().json.matchCode }}",
               "type": "string"
             },
             {
@@ -1478,7 +1478,7 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
   "triggerCount": 1,
-  "versionId": "6bd118f3-0eed-4014-9077-3d527efae949",
+  "versionId": "3a1fc50d-b510-4c3b-a8dc-7286a2d467e0",
   "owner": {
     "type": "personal",
     "projectId": "4gZXsoo5v3SNQN13",
