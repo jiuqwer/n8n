@@ -204,7 +204,7 @@
     {
       "parameters": {
         "resume": "specificTime",
-        "dateTime": "={{ $json.reviewTime }}"
+        "dateTime": "={{ $json.reviewTime.split('.')[0] }}"
       },
       "id": "cf173b61-7114-4e2a-a4c7-4bbfb22124d4",
       "name": "等待至赛后",
@@ -405,11 +405,14 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        760,
+        768,
         16
       ],
       "id": "8c68b74d-ac3d-4b1f-bdce-daf5ded8070b",
       "name": "OpenAI Chat Model1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5,
       "credentials": {
         "openAiApi": {
           "id": "h8jtCuruixgdtycY",
@@ -571,7 +574,7 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
   "triggerCount": 0,
-  "versionId": "f10055d7-91a4-4fb1-bc2c-2295d584d528",
+  "versionId": "17f8fcfd-d6b4-41d8-ab73-9a804e23435d",
   "owner": {
     "type": "personal",
     "projectId": "4gZXsoo5v3SNQN13",
