@@ -10,7 +10,7 @@
       "typeVersion": 1,
       "position": [
         -880,
-        -208
+        -464
       ]
     },
     {
@@ -34,9 +34,13 @@
             "home_team": "={{ $json.homeTeam }}",
             "away_team": "={{ $json.awayTeam }}",
             "league": "={{ $json.league }}",
-            "ai_prediction": "={{ $json.prediction }}",
+            "ai_prediction": "={{ $json.ai_prediction }}",
             "match_code": "={{ $json.matchCode }}",
-            "prediction_date": "={{ $json.predictionDate }}"
+            "prediction_date": "={{ $json.predictionDate }}",
+            "predict_min": "={{ $json.predict_min }}",
+            "predict_max": "={{ $json.predict_max }}",
+            "model_name": "={{ $json.model_name }}",
+            "predict_side": "={{ $json.predict_side }}"
           },
           "matchingColumns": [
             "id"
@@ -166,6 +170,46 @@
               "type": "string",
               "canBeUsedToMatch": true,
               "removed": false
+            },
+            {
+              "id": "model_name",
+              "displayName": "model_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "predict_min",
+              "displayName": "predict_min",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "predict_max",
+              "displayName": "predict_max",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "predict_side",
+              "displayName": "predict_side",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -178,9 +222,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -656,
-        -208
+        -432,
+        -464
       ],
+      "retryOnFail": true,
       "credentials": {
         "postgres": {
           "id": "pF86czUGQR9pDrjl",
@@ -190,15 +235,15 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\n\n// 1. 自动兼容 matchTime (主流程传来) 和 match_date (数据库返回)\nlet rawTime = input.matchTime || input.match_date;\n\nif (!rawTime) {\n    throw new Error(\"无法定位时间字段，请检查上游节点输出\");\n}\n\nlet matchDate;\n\n// 2. 类型检查与解析\nif (rawTime instanceof Date) {\n    matchDate = rawTime;\n} else if (typeof rawTime === 'string') {\n    if (rawTime.includes('T')) {\n        matchDate = new Date(rawTime);\n    } else {\n        // 处理 \"12-30 01:30\" 这种非标准格式\n        const now = new Date();\n        let matchYear = now.getFullYear();\n        const month = parseInt(rawTime.split('-')[0]);\n        if (now.getMonth() === 11 && month === 1) matchYear++; // 跨年处理\n        matchDate = new Date(`${matchYear}-${rawTime}`);\n    }\n}\n\nif (isNaN(matchDate.getTime())) {\n    throw new Error(`无效的时间值: ${rawTime}`);\n}\n\n// 3. 设定在开赛 3.5 小时后复盘\nconst reviewTime = new Date(matchDate.getTime() + 3.5 * 60 * 60 * 1000);\n\n// 4. 清洗数据（处理 matchCode 前缀可能带 = 的问题）\nlet cleanMatchCode = input.matchCode || \"未知编号\";\nif (cleanMatchCode.startsWith('=')) {\n    cleanMatchCode = cleanMatchCode.substring(1);\n}\n\nreturn {\n  reviewTime: reviewTime.toISOString(),\n  matchCode: cleanMatchCode,\n  predictionDate: input.predictionDate,\n  match_date: matchDate.toISOString() \n};"
+        "jsCode": "// 获取所有输入的模型数据\nconst items = $input.all();\n\nreturn items.map(item => {\n    const data = item.json;\n    \n    // 1. 自动兼容时间\n    let rawTime = data.matchTime || data.match_date;\n    let matchDate = new Date(rawTime);\n    \n    // 2. 设定 3.5 小时后复盘\n    const reviewTime = new Date(matchDate.getTime() + 3.5 * 60 * 60 * 1000);\n    \n    return {\n        ...data, // 重要：保留所有原始字段 (id, model_name, prediction_date 等)\n        reviewTime: reviewTime.toISOString(),\n        match_code: data.match_code || data.matchCode,\n        prediction_date: data.prediction_date || data.predictionDate,\n        match_date: matchDate.toISOString()\n    };\n});"
       },
       "id": "80182550-0924-4aba-8cd9-aa2c9631075c",
       "name": "计算复盘时间",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -432,
-        -208
+        -208,
+        -464
       ]
     },
     {
@@ -211,8 +256,8 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1,
       "position": [
-        -208,
-        -208
+        16,
+        -464
       ],
       "webhookId": "e4bc1c15-8070-4966-9443-115272f43409"
     },
@@ -279,8 +324,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        16,
-        -304
+        464,
+        -392
       ],
       "retryOnFail": true,
       "waitBetweenTries": 5000
@@ -348,8 +393,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [
-        16,
-        -112
+        688,
+        -392
       ],
       "retryOnFail": true,
       "waitBetweenTries": 5000
@@ -357,7 +402,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE ai_prediction_history \nSET \n    actual_score = '{{ $node[\"合并数据\"].json.score }}',\n    total_goals = {{ $node[\"合并数据\"].json.total_goals }},\n    lesson_learned = '{{ $node[\"AI复盘反思\"].json.output }}',\n    -- 使用我们算出来的 is_prediction_correct\n    is_correct = {{ $node[\"合并数据\"].json.is_prediction_correct }} \nWHERE \n    match_code = '{{ $node[\"接收主流程数据\"].json.matchCode }}' \n    AND prediction_date = '{{ $node[\"接收主流程数据\"].json.predictionDate }}'::DATE;",
+        "query": "UPDATE ai_prediction_history \nSET \n    actual_score = '{{ $(\"合并数据\").item.json.actual_score }}',\n    total_goals = {{ $(\"合并数据\").item.json.total_goals }},\n    lesson_learned = '{{ $json.output }}', -- 这里取当前 AI 节点的反思内容\n    is_correct = {{ $(\"合并数据\").item.json.is_prediction_correct }} \nWHERE \n    match_code = '{{ $(\"合并数据\").item.json.match_code }}' \n    AND prediction_date = '{{ $(\"合并数据\").item.json.prediction_date }}'::DATE\n    AND model_name = '{{ $(\"合并数据\").item.json.model_name }}';",
         "options": {}
       },
       "id": "909061ad-565a-4f9c-8c76-d7b5cd79f5c2",
@@ -365,8 +410,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1040,
-        -208
+        1712,
+        -464
       ],
       "credentials": {
         "postgres": {
@@ -377,39 +422,25 @@
     },
     {
       "parameters": {
-        "jsCode": "const target = $('接收主流程数据').item.json;\nconst targetCode = target.matchCode;\nconst predictionText = target.prediction; // 包含 HTML 的预测文本\n\n// 1. 获取比分数据\nconst getMatchList = (nodeName) => {\n    try {\n        const rawData = $(nodeName).item.json.data;\n        return rawData ? JSON.parse(rawData).matchList || [] : [];\n    } catch (e) { return []; }\n};\n\nconst allMatches = [...getMatchList('Get_Today_Scores'), ...getMatchList('Get_Yesterday_Scores')];\nconst found = allMatches.find(m => m.jcNum === targetCode);\n\nif (!found || found.homeScore === null) {\n    return { found: false, msg: \"未完场\" };\n}\n\nconst totalGoals = parseInt(found.homeScore) + parseInt(found.awayScore);\n\n// 2.【核心改进】从 HTML 文本中提取预测区间 (匹配类似 \"1-2球\" 或 \"[1-2]球\")\nlet isCorrect = false;\nconst rangeMatch = predictionText.match(/(\\d+)-(\\d+)球/);\nif (rangeMatch) {\n    const minGoals = parseInt(rangeMatch[1]);\n    const maxGoals = parseInt(rangeMatch[2]);\n    // 数学判定：总进球是否在区间内\n    isCorrect = (totalGoals >= minGoals && totalGoals <= maxGoals);\n}\n\nreturn {\n    found: true,\n    is_prediction_correct: isCorrect, // 这里是真正的对错判断\n    score: `${found.homeScore}-${found.awayScore}`,\n    total_goals: totalGoals,\n    matchCode: targetCode,\n    homeTeam: found.homeTeamName,\n    awayTeam: found.awayTeamName\n};"
+        "mode": "runOnceForEachItem",
+        "jsCode": "/**\n * 模式：Run Once for Each Item (每个项目执行一次)\n * 当前处理的模型数据就在 $json 中\n */\nconst modelData = $json; \n\n// 1. 获取比分数据（使用 .first() 确保跨分支读取成功）\nconst getMatches = (nodeName) => {\n    try {\n        const raw = $(nodeName).first().json.data;\n        const parsed = (typeof raw === 'string') ? JSON.parse(raw) : raw;\n        return parsed.matchList || [];\n    } catch (e) { return []; }\n};\n\nconst allMatches = [\n    ...getMatches('Get_Today_Scores'),\n    ...getMatches('Get_Yesterday_Scores')\n];\n\n// 2. 匹配比赛编号 (例如：周四013)\nconst matchCode = modelData.match_code || modelData.matchCode;\nconst matchDetails = allMatches.find(m => String(m.jcNum) === String(matchCode));\n\nif (!matchDetails) {\n    throw new Error(`未找到编号 [${matchCode}] 的比分，请确认比赛已结束。`);\n}\n\n// 3. 计算结果\nconst homeScore = parseInt(matchDetails.homeScore || 0);\nconst awayScore = parseInt(matchDetails.awayScore || 0);\nconst totalGoals = homeScore + awayScore;\n\n// 4. 判定预测是否准确\nconst isCorrect = (totalGoals >= modelData.predict_min && totalGoals <= modelData.predict_max);\n\n// 5. 返回合并后的数据给 AI 节点\nreturn {\n    ...modelData,\n    actual_score: `${homeScore}-${awayScore}`,\n    total_goals: totalGoals,\n    is_prediction_correct: isCorrect\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        464,
-        -208
+        1136,
+        -464
       ],
       "id": "526c4f0d-6f6e-4f6b-a082-2b90552a7b9f",
       "name": "合并数据"
     },
     {
       "parameters": {
-        "mode": "combine",
-        "combineBy": "combineByPosition",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        240,
-        -208
-      ],
-      "id": "3d83cf92-8a36-4a8b-9d58-531e47b4705d",
-      "name": "Merge"
-    },
-    {
-      "parameters": {
         "model": {
           "__rl": true,
-          "value": "o1-preview-all",
+          "value": "o1-pro-all",
           "mode": "list",
-          "cachedResultName": "o1-preview-all"
+          "cachedResultName": "o1-pro-all"
         },
         "responsesApiEnabled": false,
         "options": {}
@@ -417,8 +448,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        696,
-        16
+        1368,
+        -240
       ],
       "id": "69f92112-6559-47e3-96f9-d98c8caa307d",
       "name": "OpenAI Chat Model",
@@ -434,15 +465,15 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=你是一个严谨的足球数据分析师。\n\n【比赛】{{ $node[\"合并数据\"].json.homeTeam }} VS {{ $node[\"合并数据\"].json.awayTeam }}\n【预测区间】1-2球\n【实际总进球】{{ $node[\"合并数据\"].json.total_goals }}\n【判定结果】{{ $node[\"合并数据\"].json.is_prediction_correct ? \"预测正确\" : \"预测失败\" }}\n\n【任务】\n1. 如果“预测正确”，请分析预测中哪条战术情报起到了关键作用。\n2. 如果“预测失败”，请分析为什么实际进球数超出了或低于了预期区间（例如：是否因为红牌、点球、或极端铁桶阵导致了{{ $node[\"合并数据\"].json.total_goals }}球的结果）。\n要求：一句话深刻复盘，不许和稀泥。",
+        "text": "==你是一个严谨的足球进球数数据科学家。\n\n### 1. 比赛基本信息\n- 【对阵情况】：{{ $json.home_team }} VS {{ $json.away_team }}\n- 【所属联赛】：{{ $json.league }}\n- 【执行模型】：{{ $json.model_name }}\n\n### 2. 模型预测复盘\n- 【预测区间】：{{ $json.predict_min }} - {{ $json.predict_max }} 球\n- 【判定结果】：{{ $json.is_prediction_correct ? \"✅ 命中\" : \"❌ 未命中\" }}\n- 【实际总进球】：{{ $json.total_goals }} 球 (比分 {{ $json.actual_score }})\n\n### 3. 核心逻辑审计（原模型支撑数据）\n{{ $json.ai_prediction }}\n\n---\n### 【任务要求】\n请结合上述“核心逻辑审计”中的战术推演（例如伤停影响、攻防节奏等）与实际比赛结果进行对比分析：\n1. **逻辑验证**：原模型提到的关键影响因素（如里尔中轴线真空）是否在比赛中真实体现并影响了进球？\n2. **偏差修正**：如果预测失误，是因为模型低估了防守强度，还是出现了意外变数（红牌/点球）？\n3. **经验总结**：为该模型（{{ $json.model_name }}）提供一条具体的改进建议。\n\n请使用专业、犀利且不失客观的口吻进行复盘，字数控制在 100 字左右。",
         "needsFallback": true,
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        688,
-        -208
+        1360,
+        -464
       ],
       "id": "18792529-367c-4196-bf85-5bca613fe87a",
       "name": "AI复盘反思"
@@ -461,8 +492,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        824,
-        16
+        1496,
+        -240
       ],
       "id": "be2f612e-5450-4926-9667-1d7ac5765142",
       "name": "OpenAI Chat Model1",
@@ -475,6 +506,45 @@
           "name": "青云API"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * 结构化拆分 AI 预测报告\n * 包含健壮的 try...catch 错误处理与优化的正则匹配\n */\nconst input = $input.first().json;\nconst html = input.prediction || \"\";\nconst results = [];\n\nconst models = [\n  { name: 'Gemini', icon: '🤖' },\n  { name: 'Claude', icon: '🧠' },\n  { name: 'Grok', icon: '🚀' }\n];\n\nfor (const m of models) {\n  try {\n    // 1. 提取对应模型的 HTML 表格片段 (使用优化后的正则)\n    const tableRegex = new RegExp(`${m.icon}\\\\s*${m.name}\\\\s*决策</div>\\\\s*([\\\\s\\\\S]*?)(?=<div|$)`, 'i');\n    const match = html.match(tableRegex);\n    \n    // 如果没有匹配到该模型的内容，记录并跳过\n    if (!match) {\n      console.warn(`未找到模型 ${m.name} 的预测数据`);\n      continue;\n    }\n\n    const modelTable = match[1].trim();\n    let pMin = null, pMax = null, pSide = \"未知\";\n\n    // 内部解析逻辑使用 try...catch 保护，防止正则匹配失败\n    try {\n      // 2. 提取进球数区间数字 (包含 2-4, 2至4 等格式)\n      const goalsMatch = modelTable.match(/<b>总进球数区间<\\/b><\\/td>\\s*<td[^>]*>\\s*(\\d+)\\s*[-~至]\\s*(\\d+)\\s*球/);\n      if (goalsMatch) {\n        pMin = parseInt(goalsMatch[1]);\n        pMax = parseInt(goalsMatch[2]);\n      }\n\n      // 3. 提取大小球方向 (处理 HTML 标签和多余空格)\n      const sideMatch = modelTable.match(/<b>大小球方向<\\/b><\\/td>\\s*<td[^>]*>\\s*(.*?)\\s*<\\/td>/);\n      if (sideMatch) {\n        pSide = sideMatch[1].replace(/\\[|\\]/g, \"\").trim();\n      }\n    } catch (innerError) {\n      console.error(`解析模型 ${m.name} 详情数据时出错:`, innerError);\n    }\n\n    // 组装输出结果\n    results.push({\n      json: {\n        ...input, // 保留原始比赛数据\n        model_name: m.name,\n        ai_prediction: modelTable,\n        predict_min: pMin,\n        predict_max: pMax,\n        predict_side: pSide\n      }\n    });\n\n  } catch (error) {\n    // 捕获并记录处理该模型时的重大错误\n    console.error(`处理模型 ${m.name} 时发生严重错误:`, error);\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        -464
+      ],
+      "id": "70a950cc-67cd-4f1f-94c9-a3c8e93ca943",
+      "name": "拆分模型"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        912,
+        -464
+      ],
+      "id": "c29535ae-665e-4387-8e25-46d7c3b6e653",
+      "name": "Merge"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -392
+      ],
+      "id": "697cdec5-3eca-49c3-88d0-6670ace55754",
+      "name": "Limit"
     }
   ],
   "connections": {
@@ -482,7 +552,7 @@
       "main": [
         [
           {
-            "node": "Postgres_立即插入预测",
+            "node": "拆分模型",
             "type": "main",
             "index": 0
           }
@@ -515,12 +585,12 @@
       "main": [
         [
           {
-            "node": "Get_Today_Scores",
+            "node": "Merge",
             "type": "main",
             "index": 0
           },
           {
-            "node": "Get_Yesterday_Scores",
+            "node": "Limit",
             "type": "main",
             "index": 0
           }
@@ -531,7 +601,7 @@
       "main": [
         [
           {
-            "node": "Merge",
+            "node": "Get_Yesterday_Scores",
             "type": "main",
             "index": 0
           }
@@ -554,17 +624,6 @@
         [
           {
             "node": "AI复盘反思",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge": {
-      "main": [
-        [
-          {
-            "node": "合并数据",
             "type": "main",
             "index": 0
           }
@@ -603,6 +662,39 @@
           }
         ]
       ]
+    },
+    "拆分模型": {
+      "main": [
+        [
+          {
+            "node": "Postgres_立即插入预测",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Get_Today_Scores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "合并数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -613,7 +705,7 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
   "triggerCount": 0,
-  "versionId": "74b4c697-7aea-4cf1-a693-d6271089700f",
+  "versionId": "bfef245d-5874-4c0e-9f52-b290256dbaee",
   "owner": {
     "type": "personal",
     "projectId": "4gZXsoo5v3SNQN13",
