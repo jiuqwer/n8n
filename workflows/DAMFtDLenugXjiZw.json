@@ -219,10 +219,12 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "availableInMCP": false
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
   },
-  "triggerCount": 0,
-  "versionId": "2ae25882-3c36-427c-b56b-b4a1c4623e01",
+  "triggerCount": 1,
+  "versionId": "f32df799-e829-4093-8f0d-1fe1f924d7e5",
   "owner": {
     "type": "personal",
     "projectId": "4gZXsoo5v3SNQN13",
