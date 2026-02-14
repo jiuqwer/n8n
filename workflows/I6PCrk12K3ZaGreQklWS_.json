@@ -1,0 +1,1523 @@
+{
+  "id": "I6PCrk12K3ZaGreQklWS_",
+  "name": "足球预测-执行员",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// 1. 从 Loop 节点获取基础比赛信息\nconst matchInfo = $('PostgreSQL(Fetch)').item.json; \nconst homeTeam = matchInfo[\"home_team\"]; // 注意：字段名需对应数据库下划线格式\nconst awayTeam = matchInfo[\"away_team\"];\nconst league = matchInfo[\"league_name\"];\nconst matchTime = matchInfo[\"match_time\"];\n\nlet externalAiSection = \"【⚠️ 外部模型缺失】未抓取到第三方AI预测数据，请根据基本面独立判断。\";\n\ntry {\n    let extData = null;\n    \n    // 1. 尝试获取 Firecrawl 主路径的数据 (节点名：Code in JavaScript)\n    try {\n        const firecrawlNode = $('Code in JavaScript').item.json;\n        if (firecrawlNode && firecrawlNode.success) {\n            extData = firecrawlNode;\n        }\n    } catch (e) {\n        // 如果主路径没运行，会跳到这里，继续尝试备选路径\n    }\n\n    // 2. 如果主路径没数据，尝试获取备选路径的数据 (节点名：解析进球数)\n    if (!extData) {\n        try {\n            const fallbackNode = $('解析进球数').item.json;\n            if (fallbackNode && fallbackNode.external_scores) {\n                extData = fallbackNode;\n            }\n        } catch (e) {\n            // 备选路径也没运行\n        }\n    }\n\n    // 3. 赋值\n    if (extData && extData.external_scores && extData.external_scores.length > 0) {\n        externalAiSection = `【💡 第三方大数据预测参考】\\n${extData.external_goals_desc}\\n注意：这些比分是基于历史概率计算的结果。`;\n    }\n} catch (globalError) {\n    console.log(\"外部模型数据匹配完全失败\");\n}\n\n// 2. 获取 PostgreSQL 查出来的历史教训 (从 Get AI Memory 节点)\nlet memorySection = \"【⚠️ 历史档案】暂无针对该球队的历史特别记录。\";\ntry {\n    // 确保节点名称与你画布上的 \"Get AI Memory\" 一致\n    const memoryItems = $('Get AI Memory').all();\n    if (memoryItems.length > 0 && memoryItems[0].json.lesson_learned) {\n        const lessonList = memoryItems.map(item => `❌ 历史教训：${item.json.lesson_learned}`).join('\\n');\n        memorySection = `【⚠️ 必须遵守的球队历史档案】\\n系统检索到关于 ${homeTeam} 或 ${awayTeam} 的过往预测复盘，请重点规避以下错误：\\n${lessonList}`;\n    }\n} catch (e) {\n    console.log(\"未读取到历史记忆或节点未运行\");\n}\n\n// 3. 获取新增的 AI 预处理节点生成的整理情报\nlet matchReport = \"未获取到深度比赛详情报告，请完全依赖搜索工具进行独立审计。\";\ntry {\n    // 这里的名称必须匹配你新添加的那个 AI 整理节点的名称\n    // 假设你将其命名为 \"比赛数据预处理\"\n    matchReport = $('AI Agent').item.json.output; \n} catch (e) {\n    console.log(\"读取 AI 预处理情报失败，将由后续模型自行搜索补充\");\n}\n\n// 4. 构建“进球数特化”提示词内容\nconst promptContent = `核心角色：你是一名专精于“进球数模型”的足球数据科学家，同时你深信数据有时会掩盖真相。\n你的唯一任务是预测本场比赛的【总进球数】（Goal Line）。你对胜负结果不感兴趣，只关心比赛的“开放程度”和“攻防节奏”。\n\n【核心背景】\n赛事：${league}\n对阵：${homeTeam} VS ${awayTeam}\n时间：${matchTime}\n\n【系统情报：深度比赛前瞻】\n${matchReport}\n\n如果有可用的 brave_web_search 工具，请尝试获取实时数据；若工具不可用，请基于【系统情报】进行深度推理。\n【外部模型参考】\n${externalAiSection}\n【分析阶段：进球逻辑审计】\n1. 战术风格对撞：分析双方战术是否会产生高节奏互捅，还是低节奏的大巴防守。\n2. 进球效率诊断：基于预期进球与实际转化率，判断双方近期的进球难易度。\n3. 风险评估：分析比赛性质（如杯赛首回合）及市场热度，规避“诱大”或“诱小”风险。\n\n【量化预测输出】\n基于上述审计，请直接输出：\n1. **核心进球数区间**（如：2-3球）\n2. **进球数方向**（Over/Under 2.5球）\n3. **精选比分波胆**（仅用于辅助验证进球数判断）\n【强制输出要求】\n你必须按以下两个部分输出内容：\n\n第一部分：HTML 决策摘要（务必严格遵守此 HTML 格式）\n<table border=\"1\" style=\"border-collapse: collapse; width: 100%; text-align: center; font-family: sans-serif;\">\n  <tr>\n    <td style=\"padding:5px; background-color: #f0f9ff; width: 30%;\"><b>总进球数区间</b></td>\n    <td style=\"padding:5px; font-weight: bold; color: #d97706;\">[此处填入区间，如：2-3球]</td>\n  </tr>\n  <tr>\n    <td style=\"padding:5px; background-color: #f0f9ff;\"><b>大小球方向</b></td>\n    <td style=\"padding:5px;\">[此处填入方向，如：大 2.5 球]</td>\n  </tr>\n  <tr>\n    <td style=\"padding:5px; background-color: #f0f9ff;\"><b>精选比分</b></td>\n    <td style=\"padding:5px;\">[此处填入 2-3 个比分]</td>\n  </tr>\n  <tr>\n    <td style=\"padding:5px; background-color: #f0f9ff;\"><b>核心审计逻辑</b></td>\n    <td style=\"padding:5px; font-size: 12px; text-align: left;\">[简述一句最核心的支撑理由]</td>\n  </tr>\n</table>\n${memorySection}\n`;\n\n// 核心修改：明确指令，要求输出“提示词模版”而非“预测结果”\nconst requestBody = {\n  model: \"deepseek-r1\",\n  messages: [\n    {\n      role: \"user\",\n      content: `\n\n【原始素材】\n${promptContent}\n\n【执行标准】\n1. 逻辑升维：将原始素材中的事实（如伤停）转化为分析逻辑（例如：将“中卫缺阵”转化为“防线抗压系数评估模型”）。\n2. 结构化：输出应包含：角色定义、分析维度（火力、防线、战术、风险）、推理路径、以及最终要求的输出格式。`\n    }\n  ],\n  temperature: 0.1,\n  max_tokens: 7096\n};\n\nreturn {\n  ...requestBody,\n  metadata: {\n    homeTeam: homeTeam,\n    awayTeam: awayTeam,\n    matchCode: matchInfo[\"matchCode\"]\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1120,
+        512
+      ],
+      "id": "af4d8ea8-ea30-4ad0-a303-3682f86370f8",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gemini-3-pro-preview-thinking-*",
+          "mode": "list",
+          "cachedResultName": "gemini-3-pro-preview-thinking-*"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "maxTokens": 32768,
+          "temperature": 0.3,
+          "maxRetries": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -896,
+        224
+      ],
+      "id": "e01b18ff-032a-4c52-8734-b73de6eaf3b4",
+      "name": "OpenAI Chat Model",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "h8jtCuruixgdtycY",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-opus-4-5-20251101-thinking",
+          "mode": "list",
+          "cachedResultName": "claude-opus-4-5-20251101-thinking"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "maxTokens": 32768,
+          "temperature": 0.3,
+          "maxRetries": 2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -896,
+        624
+      ],
+      "id": "02feeece-0bf2-42e9-99a9-fd6b18b4fc85",
+      "name": "OpenAI Chat Model1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "Ui189I4AfjH43AHB",
+          "name": "Claude Code 蓝星"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Code in JavaScript1').item.json.messages[0].content }}",
+        "needsFallback": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -896,
+        400
+      ],
+      "id": "f883c6fd-ddd2-42bb-9d7a-37164db1d251",
+      "name": "claude-opus-4-5-20251101-thinking",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Code in JavaScript1').item.json.messages[0].content }}",
+        "needsFallback": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -896,
+        0
+      ],
+      "id": "6b593e17-960a-41f8-92c6-9f6622298ba5",
+      "name": "gemini-3-pro-preview-thinking",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "grok-4-fast-reasoning",
+          "mode": "list",
+          "cachedResultName": "grok-4-fast-reasoning"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "maxTokens": 30000,
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -896,
+        1136
+      ],
+      "id": "2b594f21-288a-4f29-8f7f-4abf1d54ea33",
+      "name": "OpenAI Chat Model3",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5,
+      "credentials": {
+        "openAiApi": {
+          "id": "h8jtCuruixgdtycY",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Code in JavaScript1').item.json.messages[0].content }}",
+        "needsFallback": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -896,
+        912
+      ],
+      "id": "cadcba2e-1db7-4de1-aa72-31f5e1174228",
+      "name": "grok-4-fast-reasoning",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -544,
+        496
+      ],
+      "id": "b6a72d4b-e705-42e7-97ce-4c594fbeaea8",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 获取基础比赛信息\nconst matchInfo = $('PostgreSQL(Fetch)').item.json; \n\n// 2. 兼容性获取第三方数据 (Firecrawl 或 正则备选)\nlet extData = { external_goals_desc: '暂无外部模型比分参考' };\ntry {\n    // 优先取主路径 Code in JavaScript\n    extData = $('Code in JavaScript').item.json;\n} catch (e) {\n    try {\n        // 报错则取备选路径 解析进球数\n        extData = $('解析进球数').item.json;\n    } catch (e2) {\n        // 都没获取到则保持默认值\n    }\n}\n// 2. 定义数据提取函数：将 AI 输出的 HTML 表格与 Markdown 逻辑分离\nfunction parseAiResponse(rawText) {\n    if (!rawText) return { table: \"⚠️ 模型生成失败\", logic: \"未获取到逻辑详情\" };\n    \n    // 使用正则提取 <table>...</table> 标签内容\n    const tableMatch = rawText.match(/<table[\\s\\S]*?<\\/table>/i);\n    const table = tableMatch ? tableMatch[0] : \"未生成 HTML 表格\";\n    \n    // 剩余部分视为推理逻辑，并做基础格式化\n    let logic = rawText.replace(/<table[\\s\\S]*?<\\/table>/i, \"\").trim();\n    logic = logic ? logic.replace(/\\n/g, '<br>') : \"无详细推演逻辑\";\n    \n    return { table, logic };\n}\n\n// 3. 获取三大模型的原始输出\n// 请确保你的节点名称与下方括号内的字符串完全一致\nconst geminiRaw = $('gemini-3-pro-preview-thinking').item.json.output || \"\";\nconst claudeRaw = $('claude-opus-4-5-20251101-thinking').item.json.output || \"\";\nconst grokRaw = $('grok-4-fast-reasoning').item.json.output || \"\";\n\nconst gemini = parseAiResponse(geminiRaw);\nconst claude = parseAiResponse(claudeRaw);\nconst grok = parseAiResponse(grokRaw);\n\n// 4. 构造 HTML 邮件模板\n// 注意：此处字段名已更新为数据库格式（如 match_code, home_team 等）\nconst emailHtml = `\n<div style=\"max-width: 800px; margin: auto; font-family: 'Microsoft YaHei', sans-serif; border: 1px solid #cbd5e1; border-radius: 12px; overflow: hidden;\">\n    <div style=\"background: #1e40af; color: white; padding: 20px; text-align: center;\">\n        <div style=\"font-size: 14px; opacity: 0.8; margin-bottom: 5px;\">${matchInfo['match_code'] || '竞彩'} | ${matchInfo['league_name'] || '未知联赛'}</div>\n        <h1 style=\"margin: 0; font-size: 24px;\">${matchInfo['home_team'] || '未知'} VS ${matchInfo['away_team'] || '未知'}</h1>\n        <div style=\"margin-top: 8px;\">开赛时间：${matchInfo['match_time'] || '未知'}</div>\n    </div>\n\n    <div style=\"background: #fffbeb; padding: 15px; border-bottom: 1px solid #fef3c7; color: #92400e; font-size: 14px;\">\n        🔍 <b>数据源校准：</b> ${extData.external_goals_desc || '暂无外部模型比分参考'}\n    </div>\n\n    <div style=\"padding: 20px; background: #f8fafc;\">\n        <div style=\"margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;\">\n            <div style=\"color: #059669; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #059669; padding-left: 10px;\">🤖 Gemini Pro Thinking 决策</div>\n            ${gemini.table}\n        </div>\n        \n        <div style=\"margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;\">\n            <div style=\"color: #7c3aed; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #7c3aed; padding-left: 10px;\">🧠 Claude 4.5 Thinking 决策</div>\n            ${claude.table}\n        </div>\n\n        <div style=\"background: white; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;\">\n            <div style=\"color: #0f172a; font-weight: bold; margin-bottom: 10px; border-left: 4px solid #0f172a; padding-left: 10px;\">🚀 Grok Reasoning 决策</div>\n            ${grok.table}\n        </div>\n    </div>\n\n    <div style=\"padding: 20px; border-top: 1px solid #e2e8f0;\">\n        <details>\n            <summary style=\"cursor: pointer; font-weight: bold; color: #1e40af; padding: 10px; background: #f1f5f9; border-radius: 4px;\">🔍 查看各模型底层审计逻辑（技术摘要）</summary>\n            <div style=\"margin-top: 15px; font-size: 13px; line-height: 1.6; color: #475569;\">\n                <p><b>Gemini 推演：</b><br>${gemini.logic}</p>\n                <hr style=\"border: 0; border-top: 1px dashed #cbd5e1; margin: 15px 0;\">\n                <p><b>Claude 推演：</b><br>${claude.logic}</p>\n                <hr style=\"border: 0; border-top: 1px dashed #cbd5e1; margin: 15px 0;\">\n                <p><b>Grok 推演：</b><br>${grok.logic}</p>\n            </div>\n        </details>\n    </div>\n</div>\n`;\n\nreturn {\n    json: {\n        emailSubject: `【${matchInfo['match_code'] || '预警'}】${matchInfo['home_team']}vs${matchInfo['away_team']} 进球数综合预测`,\n        emailBody: emailHtml\n    }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        512
+      ],
+      "id": "c101b03d-da43-4977-bb47-452744e18c34",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "fromEmail": "z6666v@126.com",
+        "toEmail": "3424771506@qq.com",
+        "subject": "={{ $json.emailSubject }}",
+        "html": "={{ $json.emailBody }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        512
+      ],
+      "id": "912b4376-e23a-4b33-8ecf-24580f3bb696",
+      "name": "Send email",
+      "webhookId": "593e6e24-d699-4913-ae35-360da663773b",
+      "credentials": {
+        "smtp": {
+          "id": "rMBklesTdH2u3VVk",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT home_team, away_team, actual_score, lesson_learned \nFROM ai_prediction_history \nWHERE prediction_date = CURRENT_DATE - INTERVAL '1 day' \n  AND lesson_learned IS NOT NULL \nORDER BY id DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1696,
+        512
+      ],
+      "id": "5b911d59-dcff-46ef-a96a-1efbae594061",
+      "name": "Get AI Memory",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "pF86czUGQR9pDrjl",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Jy8WM9vZfplR4SQk",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/Jy8WM9vZfplR4SQk",
+          "cachedResultName": "Match_Review_Subworkflow_Postgres"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        512
+      ],
+      "id": "cdd130e2-c338-4dbf-af32-b8065e887b2c",
+      "name": "Call 'Match_Review_Subworkflow_Postgres'"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3d62746-8a01-4c07-969d-55a8a7438b9c",
+              "name": "matchTime",
+              "value": "={{ $node[\"PostgreSQL(Fetch)\"].json.match_time }}",
+              "type": "string"
+            },
+            {
+              "id": "6e381ac9-179e-45de-b02e-be9434b77345",
+              "name": "homeTeam",
+              "value": "={{ $node[\"PostgreSQL(Fetch)\"].json.home_team }}",
+              "type": "string"
+            },
+            {
+              "id": "be82282f-d696-4b47-8ca9-b5b8d4f16467",
+              "name": "awayTeam",
+              "value": "={{ $node[\"PostgreSQL(Fetch)\"].json.away_team }}",
+              "type": "string"
+            },
+            {
+              "id": "dcbd6586-db31-49ca-9ed1-b5a250fdfc59",
+              "name": "prediction",
+              "value": "={{ $('Code in JavaScript2').item.json.emailBody }}",
+              "type": "string"
+            },
+            {
+              "id": "87811c39-2c24-4d5c-aa02-4efd5671c39b",
+              "name": "=league",
+              "value": "={{ $node[\"PostgreSQL(Fetch)\"].json.league_name }}",
+              "type": "string"
+            },
+            {
+              "id": "70df0b1c-af10-4187-b4f5-0deddf8d9d7e",
+              "name": "=matchCode",
+              "value": "={{ $node[\"PostgreSQL(Fetch)\"].json.match_code }}",
+              "type": "string"
+            },
+            {
+              "id": "98952277-b7e1-43b8-a9ed-5711b69ed1ee",
+              "name": "=predictionDate",
+              "value": "={{ $now.format('yyyy-MM-dd') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        512
+      ],
+      "id": "abd12868-eb51-4e37-8ea5-4e51f6634c4d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "url": "https://api.yucejia.com/api/v1/matchDetail",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "matchId",
+              "value": "={{ $node[\"PostgreSQL(Fetch)\"].json.match_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json, text/javascript, */*; q=0.01"
+            },
+            {
+              "name": "accept-language",
+              "value": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+            },
+            {
+              "name": "origin",
+              "value": "https://www.yucejia.com"
+            },
+            {
+              "name": "priority",
+              "value": "u=1, i"
+            },
+            {
+              "name": "referer",
+              "value": "https://www.yucejia.com/"
+            },
+            {
+              "name": "sec-ch-ua",
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
+            },
+            {
+              "name": "sec-ch-ua-mobile",
+              "value": "?0"
+            },
+            {
+              "name": "sec-ch-ua-platform",
+              "value": "\"Windows\""
+            },
+            {
+              "name": "sec-fetch-dest",
+              "value": "empty"
+            },
+            {
+              "name": "sec-fetch-mode",
+              "value": "cors"
+            },
+            {
+              "name": "sec-fetch-site",
+              "value": "same-site"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -3840,
+        608
+      ],
+      "id": "06f3398e-0810-4001-84ae-2582264ad1cf",
+      "name": "获取比赛详情",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# Role 你是一个专精于“进球数模型审计”的首席情报官。你的任务是将多维度的比赛原始事实转化为一份深度、无偏见的“比赛前瞻审计报告”。\n\n# 核心情报源（动态权重）\n\n【主力数据：预测家脱水情报】（可选，若匹配失败则为空）： {{ $('AI 智能蒸馏 (Gemini)').item.json.output }}\n\n【增补数据：雷速深度情报】： {{ $node[\"JavaScript 关键词脱水\"]?.json?.dehydratedText || \"⚠️ 本场比赛未匹配到雷速深度情报\" }}\n\n【第三方大数据预测】： {{ $('解析进球数').item.json.external_goals_desc }}\n\n3. 【系统检索：历史复盘教训】：\n{{ $('Get AI Memory').all().length > 0 ? JSON.stringify($('Get AI Memory').all().map(i => i.json.lesson_learned)) : \"本场无相关历史记录\" }}\n\n# 审计指令\n\n如果情报源 2 缺失：请全力挖掘情报源 1 中的近况、得失球数据及专家观点进行推理。\n\n如果情报源 2 存在：请对比两家平台在伤停、大球趋势上的异同，寻找“逻辑共振点”。\n\n风险警示：若情报源 4 提及了该球队，必须在报告末尾进行“历史重演风险”专项说明。\n\n# 强制输出格式\n\n- 使用 Bullet Points 记录事实。\n- 如果某项数据缺失，请标注“该项数据缺失”\n- 严禁给出“建议买什么”，只提供支撑决策的审计报告。",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -1472,
+        512
+      ],
+      "id": "22e560d3-6a7d-4bbc-aca0-12b982bfa20e",
+      "name": "AI Agent",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o1-mini-2024-09-12",
+          "mode": "list",
+          "cachedResultName": "o1-mini-2024-09-12"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "maxTokens": 30000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1408,
+        736
+      ],
+      "id": "22ed2a79-aa86-470a-8f88-eef416d6fbfa",
+      "name": "比赛数据预处理",
+      "credentials": {
+        "openAiApi": {
+          "id": "h8jtCuruixgdtycY",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://www.yucejia.com/matchDetail/matchModel/{{ $node[\"PostgreSQL(Fetch)\"].json.match_id }}.html",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json, text/javascript, */*; q=0.01"
+            },
+            {
+              "name": "accept-language",
+              "value": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+            },
+            {
+              "name": "origin",
+              "value": "https://www.yucejia.com"
+            },
+            {
+              "name": "priority",
+              "value": "u=1, i"
+            },
+            {
+              "name": "referer",
+              "value": "https://www.yucejia.com/"
+            },
+            {
+              "name": "sec-ch-ua",
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
+            },
+            {
+              "name": "sec-ch-ua-mobile",
+              "value": "?0"
+            },
+            {
+              "name": "sec-ch-ua-platform",
+              "value": "\"Windows\""
+            },
+            {
+              "name": "sec-fetch-dest",
+              "value": "empty"
+            },
+            {
+              "name": "sec-fetch-mode",
+              "value": "cors"
+            },
+            {
+              "name": "sec-fetch-site",
+              "value": "same-site"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "Text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2144,
+        576
+      ],
+      "id": "2d43bc8d-01e3-4a75-883c-5eb9bd084b9a",
+      "name": "获取外部模型网页",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "jsCode": "// 修改点：使用 .Text 匹配上游节点输出\nconst html = $input.first().json.Text || \"\"; \nconst output = {\n  external_scores: [],\n  external_goals_desc: \"该场比赛暂无外部模型比分参考。\"\n};\n\n// 1. 提取“AI比分”行中的内容\nconst tableRowMatch = html.match(/AI比分<\\/td>([\\s\\S]*?)<\\/tr>/);\n\nif (tableRowMatch) {\n    const rowHtml = tableRowMatch[1];\n    // 匹配类似 2-1, 1-0 这种格式的比分\n    const scoreRegex = /(\\d+)-(\\d+)/g;\n    let match;\n    let scoreDetails = [];\n    \n    while ((match = scoreRegex.exec(rowHtml)) !== null) {\n        const home = parseInt(match[1]);\n        const away = parseInt(match[2]);\n        const total = home + away;\n        scoreDetails.push(`${match[0]}(${total}球)`);\n    }\n    \n    if (scoreDetails.length > 0) {\n        output.external_scores = scoreDetails;\n        output.external_goals_desc = `第三方AI预测比分：${scoreDetails.join('、')}。`;\n    }\n}\nif (!html) return { json: { external_goals_desc: \"数据源为空\" } };\nreturn { json: output };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1920,
+        576
+      ],
+      "id": "65d72b28-87f5-4236-8aa1-f3dc532933c7",
+      "name": "解析进球数"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * 足球数据脱水脚本 (JS)\n * 目标：删除多语言、冗余统计、未来赛程，仅保留进球数预测核心指标\n */\nconst input = $input.all();\nconst output = [];\n\nfor (const item of input) {\n    let rawData = item.json.data;\n    // 自动兼容字符串或对象格式\n    let body = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;\n    let res = body.result || {};\n    let analysis = res.analysisItem || {};\n\n    // 1. 内部处理：平铺多语言，只取中文\n    const flattenPlayer = (p) => ({\n        name: p.name?.cn || \"未知\",\n        pos: p.position?.cn || \"未知\",\n        reason: p.reason || \"未知\"\n    });\n\n    // 2. 内部处理：简化历史交锋，剔除极其占空间的赔率历史\n    const simplifyMatch = (m) => ({\n        league: m.leagueName || m.leagueNameFull,\n        home: m.homeTeam?.name,\n        away: m.awayTeam?.name,\n        score: `${m.homeTeam?.score}-${m.awayTeam?.score}`,\n        corners: `${m.homeTeam?.corner}-${m.awayTeam?.corner}`,\n        ou_res: m.ou?.[0]?.result // 只留大小球结果\n    });\n\n    // 3. 构建脱水后的核心对象\n    const dehydrated = {\n        // 核心对阵信息\n        match: {\n            home: analysis.constract?.normal?.[0]?.teamName || \"主队\",\n            away: analysis.constract?.normal?.[1]?.teamName || \"客队\",\n            referee: analysis.referee?.referee?.name?.cn || \"未知\"\n        },\n        // 关键进球数技术统计 (过滤掉黄牌、犯规等次要信息)\n        tech_stats: (res.techItem?.lastTechStat?.itemList || [])\n            .filter(i => [\"进球\", \"失球\", \"被射门\", \"控球率\", \"角球\"].includes(i.name))\n            .map(i => ({ name: i.name, home: i.home.text, away: i.away.text })),\n        \n        // 伤停情报 (删除 15 种多余语言)\n        injuries: {\n            home: (analysis.injury?.homeInjury || []).map(flattenPlayer),\n            away: (analysis.injury?.awayInjury || []).map(flattenPlayer)\n        },\n        \n        // 近期战绩 (删除未来赛程 future3Matches)\n        history: {\n            vs: (analysis.vsMatches?.matches || []).slice(0, 6).map(simplifyMatch),\n            home_near: (analysis.nearMatches?.homeMatches?.matches || []).slice(0, 6).map(simplifyMatch),\n            away_near: (analysis.nearMatches?.awayMatches?.matches || []).slice(0, 6).map(simplifyMatch)\n        },\n        \n        // 深度情报与专家分析\n        expert_view: analysis.xinShuiRecommend?.recommend?.cn || \"\",\n        intelligence: (analysis.preInfo?.preInfos || [])\n            .filter(i => i.content)\n            .map(i => i.content).join(\"\\n\")\n    };\n\n    output.push({ json: dehydrated });\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3616,
+        608
+      ],
+      "id": "fa93446a-90df-417e-82a6-59941727094a",
+      "name": "足球数据脱水脚本"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gemini-3-flash-preview",
+          "mode": "list",
+          "cachedResultName": "gemini-3-flash-preview"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -3392,
+        736
+      ],
+      "id": "a110e730-2479-484f-bae0-fddb4179e05f",
+      "name": "OpenAI Chat Model6",
+      "credentials": {
+        "openAiApi": {
+          "id": "h8jtCuruixgdtycY",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "==# Role \n你是一个顶级的足球情报审计官。\n\n# 核心情报池（来自 4 个维度的深度抓取）\n{{ JSON.stringify($json.mcp_results) }}\n\n# 任务指令\n1. **交叉验证**：对比【核心情报】页面的伤停与【主/客队背景】页面的阵型预测是否冲突。\n2. **火力评估**：从【技术统计】中分析最近 5 场的大球规律，并结合专家观点。\n3. **输出报告**：整理成一份针对“总进球数”的深度审计报告，分点陈述，禁止废话。",
+        "needsFallback": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -3392,
+        512
+      ],
+      "id": "2550a212-0392-46a1-99e5-9d5f0969fc39",
+      "name": "AI 智能蒸馏 (Gemini)"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-opus-4-5-20251101-thinking",
+          "mode": "list",
+          "cachedResultName": "claude-opus-4-5-20251101-thinking"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -768,
+        624
+      ],
+      "id": "403b9fb4-cea2-4c18-aa8a-77f5c560f324",
+      "name": "OpenAI Chat Model7",
+      "credentials": {
+        "openAiApi": {
+          "id": "r515yWpS5wBDgTsk",
+          "name": "青云API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "grok-4-0709",
+          "mode": "list",
+          "cachedResultName": "grok-4-0709"
+        },
+        "responsesApiEnabled": false,
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -768,
+        1136
+      ],
+      "id": "a5d3decc-bcf7-4bfb-bc3d-8fde65604b97",
+      "name": "OpenAI Chat Model8",
+      "credentials": {
+        "openAiApi": {
+          "id": "r515yWpS5wBDgTsk",
+          "name": "青云API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gemini-3-pro-preview-11-2025",
+          "mode": "list",
+          "cachedResultName": "gemini-3-pro-preview-11-2025"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -768,
+        224
+      ],
+      "id": "fe157631-6b30-456b-88fd-ce36dec036f8",
+      "name": "OpenAI Chat Model9",
+      "credentials": {
+        "openAiApi": {
+          "id": "r515yWpS5wBDgTsk",
+          "name": "青云API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "glm-4.6-thinking",
+          "mode": "list",
+          "cachedResultName": "glm-4.6-thinking"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -3264,
+        736
+      ],
+      "id": "7f410c82-6592-46e9-8c81-a87138c3f44d",
+      "name": "OpenAI Chat Model10",
+      "credentials": {
+        "openAiApi": {
+          "id": "r515yWpS5wBDgTsk",
+          "name": "青云API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "connectionType": "http"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        -4288,
+        416
+      ],
+      "id": "c9fe171f-4f1f-4dfd-af2f-2e58ea1a96d9",
+      "name": "MCP Client2",
+      "credentials": {
+        "mcpClientHttpApi": {
+          "id": "ng71bL7b3nUrDzQ1",
+          "name": "MCP Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "connectionType": "http",
+        "operation": "executeTool",
+        "toolName": "={{ $json.tools[0].name }}",
+        "toolParameters": "={\n  \"url\":\"={{ $json.active_url }}\",\n  \"formats\": [\n    {\n      \"type\": \"json\",\n      \"prompt\": \"这是一个足球比赛的${$json.url_type}页面。请提取：1.伤停名单 2.近期得失球规律 3.阵型预测 4.专家对进球数（大小球）的倾向。\",\n      \"schema\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"over_goals_stat\": { \"type\": \"string\" },\n          \"key_injuries\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n          \"expert_sentiment\": { \"type\": \"string\" }\n        }\n      }\n    }\n  ],\n  \"proxy\": \"stealth\"\n}"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        -4064,
+        416
+      ],
+      "id": "e2a39d6b-959e-4482-913b-2a51cbc3f74c",
+      "name": "MCP Client3",
+      "credentials": {
+        "mcpClientHttpApi": {
+          "id": "ng71bL7b3nUrDzQ1",
+          "name": "MCP Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 只保留包含这些关键词的句子\nconst keywords = [\"进球\", \"失球\", \"伤\", \"缺\", \"大球\", \"小球\", \"阵容\"];\nconst rawText = $input.first().json.markdown;\nconst cleanText = rawText.split('\\n')\n  .filter(line => keywords.some(k => line.includes(k)))\n  .join('\\n');\nreturn { json: { dehydratedText: cleanText } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3616,
+        416
+      ],
+      "id": "c141568c-b5d2-4706-a4fa-31096dfae004",
+      "name": "JavaScript 关键词脱水"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8e2c3fce-d8e1-449b-bb2b-15dd00759133",
+              "leftValue": "={{ $json.匹配状态 }}",
+              "rightValue": "成功",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -4736,
+        512
+      ],
+      "id": "916c4427-d93c-472c-9762-625c0d4cf5ed",
+      "name": "If",
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "8e2c3fce-d8e1-449b-bb2b-15dd00759133",
+            "leftValue": "={{ $json.匹配状态 }}",
+            "rightValue": "成功",
+            "operator": {
+              "type": "string",
+              "operation": "equals",
+              "name": "filter.operator.equals"
+            }
+          }
+        ],
+        "combinator": "and"
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0,15,30,45 19-21 * * *"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "0 0 22 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -5632,
+        512
+      ],
+      "id": "37c5db29-de14-4556-8271-3d0f143b25ac",
+      "name": "Schedule Trigger",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- 寻找状态为等待中，且预测时间已到的最早一场比赛\nSELECT * FROM match_tasks \nWHERE status = 'pending' \n  AND predict_time <= NOW() \nORDER BY predict_time ASC \nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -5408,
+        512
+      ],
+      "id": "fb70e83e-1bc8-4cab-9eb7-06ae9d895b16",
+      "name": "PostgreSQL(Fetch)",
+      "credentials": {
+        "postgres": {
+          "id": "pF86czUGQR9pDrjl",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE match_tasks \nSET status = 'processing' \nWHERE id = $1;",
+        "options": {
+          "queryReplacement": "={{ $json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -5184,
+        512
+      ],
+      "id": "0d02de4a-156e-489a-afc4-15d7998dd144",
+      "name": "PostgreSQL(Locking)",
+      "credentials": {
+        "postgres": {
+          "id": "pF86czUGQR9pDrjl",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "connectionType": "http"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        -3040,
+        512
+      ],
+      "id": "c206308f-0e44-4e92-b6dd-e08757f0b585",
+      "name": "MCP Client4",
+      "credentials": {
+        "mcpClientHttpApi": {
+          "id": "ng71bL7b3nUrDzQ1",
+          "name": "MCP Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 获取来自 Firecrawl 的 JSON 提取结果\nconst firecrawlResult = $('Firecrawl_Extract').item.json.result.content[0].json;\n\nconst output = {\n  external_scores: [],\n  external_goals_desc: \"该场比赛暂无外部模型比分参考。\",\n  success: false // 默认失败\n};\n\nif (firecrawlResult && firecrawlResult.external_scores && firecrawlResult.external_scores.length > 0) {\n    const scoreDetails = firecrawlResult.external_scores.map(item => {\n        return `${item.score}(${item.total}球)`;\n    });\n    \n    output.external_scores = scoreDetails;\n    output.external_goals_desc = `第三方AI预测比分：${scoreDetails.join('、')}。`;\n    output.success = true; // 【核心修复】标记成功，供 If1 节点使用\n}\n\nreturn { json: output };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2592,
+        512
+      ],
+      "id": "ddef2f36-5106-4ad8-9804-777abe0ece4e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5bdbe422-a767-4b11-a064-777b9256d313",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2368,
+        512
+      ],
+      "id": "9077b703-4215-459a-935d-bd80249e9f76",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "connectionType": "http",
+        "operation": "executeTool",
+        "toolName": "={{ $json.tools[0].name }}",
+        "toolParameters": "={\n  \"url\": \"https://www.yucejia.com/matchDetail/matchModel/{{ $node[\"PostgreSQL(Fetch)\"].json.match_id }}.html\",\n  \"formats\": [\n    {\n      \"type\": \"json\",\n      \"prompt\": \"提取表格中 'AI比分' 行对应的所有比分和进球总数预测\",\n      \"schema\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"external_scores\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"score\": { \"type\": \"string\", \"description\": \"比分格式如 2-1\" },\n                \"total\": { \"type\": \"integer\", \"description\": \"总进球数\" }\n              }\n            }\n          }\n        },\n        \"required\": [\"external_scores\"]\n      }\n    }\n  ],\n  \"proxy\": \"stealth\"\n}"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        -2816,
+        512
+      ],
+      "id": "cf8cad87-74ab-4dd3-b4ba-acefe38d3ca0",
+      "name": "Firecrawl_Extract",
+      "credentials": {
+        "mcpClientHttpApi": {
+          "id": "ng71bL7b3nUrDzQ1",
+          "name": "MCP Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE match_tasks SET status = 'completed' WHERE id = $1",
+        "options": {
+          "queryReplacement": "={{ $node[\"PostgreSQL(Fetch)\"].json.id }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        128,
+        512
+      ],
+      "id": "33f79359-a654-4785-b458-737e094db02b",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "pF86czUGQR9pDrjl",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 获取匹配成功的比赛数据\nconst match = $input.item.json;\n\n// 2. 定义需要抓取的链接数组\nconst links = [\n  { url: match['主队链接'], type: '主队背景' },\n  { url: match['客队链接'], type: '客队背景' },\n  { url: match['情报链接'], type: '核心情报' },\n  { url: match['分析链接'], type: '技术统计' }\n];\n\n// 3. 将一个 Item 拆分为多个 Items，n8n 会自动为每个 Item 运行后续节点一次\nreturn links\n  .filter(l => l.url && l.url.startsWith('http')) // 过滤无效链接\n  .map(l => ({ \n    json: { \n      ...match, \n      active_url: l.url, \n      url_type: l.type \n    } \n  }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4512,
+        416
+      ],
+      "id": "053dee65-a41c-481d-b0d6-400d84236f7a",
+      "name": "链接拆分器"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "mcp_results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -3840,
+        416
+      ],
+      "id": "c1efdf59-54fd-45cb-bc8f-32ae72bf99e4",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 从数据库取出的 match_tasks 记录中解析 raw_data（调度员已提前做过“雷速赛程匹配”并写入 raw_data）\n// 输出：将 raw_data 中的字段（如 主队链接/客队链接/情报链接/分析链接、匹配状态 等）合并到当前 item，供后续预测链路使用\n\nconst row = $json;\n\n// raw_data 可能是 JSON 字符串，也可能是对象\nlet raw = {};\ntry {\n  if (row.raw_data) {\n    raw = (typeof row.raw_data === 'string') ? JSON.parse(row.raw_data) : row.raw_data;\n  }\n} catch (e) {\n  raw = { 解析raw_data失败: e.message };\n}\n\n// 兼容：若调度员未写“匹配状态”，则用“是否存在情报链接”推断\nconst hasLinks = !!(raw['情报链接'] || raw['分析链接'] || raw['主队链接'] || raw['客队链接']);\nconst matchStatus = raw['匹配状态'] || (hasLinks ? '成功' : '失败');\n\nreturn {\n  json: {\n    ...row,\n    ...raw,\n    匹配状态: matchStatus\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4960,
+        512
+      ],
+      "id": "013375a8-52eb-4886-bdf0-b352a9ef2098",
+      "name": "解析任务raw_data"
+    }
+  ],
+  "connections": {
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "claude-opus-4-5-20251101-thinking",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "gemini-3-pro-preview-thinking",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "grok-4-fast-reasoning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "claude-opus-4-5-20251101-thinking",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "claude-opus-4-5-20251101-thinking": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "gemini-3-pro-preview-thinking": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "grok-4-fast-reasoning",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "grok-4-fast-reasoning": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send email": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get AI Memory": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'Match_Review_Subworkflow_Postgres'": {
+      "main": [
+        []
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Call 'Match_Review_Subworkflow_Postgres'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取比赛详情": {
+      "main": [
+        [
+          {
+            "node": "足球数据脱水脚本",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "比赛数据预处理": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "获取外部模型网页": {
+      "main": [
+        [
+          {
+            "node": "解析进球数",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析进球数": {
+      "main": [
+        [
+          {
+            "node": "Get AI Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "gemini-3-pro-preview-thinking",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "足球数据脱水脚本": {
+      "main": [
+        [
+          {
+            "node": "AI 智能蒸馏 (Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model6": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI 智能蒸馏 (Gemini)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI 智能蒸馏 (Gemini)": {
+      "main": [
+        [
+          {
+            "node": "MCP Client4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model7": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "claude-opus-4-5-20251101-thinking",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model8": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "grok-4-fast-reasoning",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model9": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "gemini-3-pro-preview-thinking",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model10": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI 智能蒸馏 (Gemini)",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "MCP Client2": {
+      "main": [
+        [
+          {
+            "node": "MCP Client3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client3": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JavaScript 关键词脱水": {
+      "main": [
+        [
+          {
+            "node": "AI 智能蒸馏 (Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "链接拆分器",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "获取比赛详情",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL(Fetch)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL(Fetch)": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL(Locking)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL(Locking)": {
+      "main": [
+        [
+          {
+            "node": "解析任务raw_data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client4": {
+      "main": [
+        [
+          {
+            "node": "Firecrawl_Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firecrawl_Extract": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Get AI Memory",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "获取外部模型网页",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "链接拆分器": {
+      "main": [
+        [
+          {
+            "node": "MCP Client2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "JavaScript 关键词脱水",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "解析任务raw_data": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "triggerCount": 1,
+  "versionId": "b0e26f7c-3d70-4c52-841a-e2c04df552ad",
+  "owner": {
+    "type": "personal",
+    "projectId": "4gZXsoo5v3SNQN13",
+    "projectName": "卷梦 书 <3424771506@qq.com>",
+    "personalEmail": "3424771506@qq.com"
+  },
+  "parentFolderId": null,
+  "isArchived": false
+}

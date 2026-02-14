@@ -325,7 +325,7 @@
       "typeVersion": 4.1,
       "position": [
         464,
-        -392
+        -400
       ],
       "retryOnFail": true,
       "waitBetweenTries": 5000
@@ -394,7 +394,7 @@
       "typeVersion": 4.1,
       "position": [
         688,
-        -392
+        -400
       ],
       "retryOnFail": true,
       "waitBetweenTries": 5000
@@ -448,7 +448,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        1368,
+        1376,
         -240
       ],
       "id": "69f92112-6559-47e3-96f9-d98c8caa307d",
@@ -492,7 +492,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        1496,
+        1504,
         -240
       ],
       "id": "be2f612e-5450-4926-9667-1d7ac5765142",
@@ -541,7 +541,7 @@
       "typeVersion": 1,
       "position": [
         240,
-        -392
+        -400
       ],
       "id": "697cdec5-3eca-49c3-88d0-6670ace55754",
       "name": "Limit"
@@ -705,7 +705,7 @@
     "callerPolicy": "workflowsFromSameOwner"
   },
   "triggerCount": 0,
-  "versionId": "bfef245d-5874-4c0e-9f52-b290256dbaee",
+  "versionId": "986580b3-d434-4558-95be-810ebf3879c5",
   "owner": {
     "type": "personal",
     "projectId": "4gZXsoo5v3SNQN13",

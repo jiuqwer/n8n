@@ -1,0 +1,341 @@
+{
+  "id": "2jujPCtWYMM8FIwc-pPIh",
+  "name": "足球预测-调度员",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://api.yucejia.com/api/v1/jcMatchList",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "*/*"
+            },
+            {
+              "name": "accept-language",
+              "value": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+            },
+            {
+              "name": "origin",
+              "value": "https://www.yucejia.com"
+            },
+            {
+              "name": "priority",
+              "value": "u=1, i"
+            },
+            {
+              "name": "referer",
+              "value": "https://www.yucejia.com/"
+            },
+            {
+              "name": "sec-ch-ua",
+              "value": "\"Microsoft Edge\";v=\"143\", \"Chromium\";v=\"143\", \"Not A(Brand\";v=\"24\""
+            },
+            {
+              "name": "sec-ch-ua-mobile",
+              "value": "?0"
+            },
+            {
+              "name": "sec-ch-ua-platform",
+              "value": "\"Windows\""
+            },
+            {
+              "name": "sec-fetch-dest",
+              "value": "empty"
+            },
+            {
+              "name": "sec-fetch-mode",
+              "value": "cors"
+            },
+            {
+              "name": "sec-fetch-site",
+              "value": "same-site"
+            },
+            {
+              "name": "user-agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        896,
+        0
+      ],
+      "id": "4972d6ca-15a4-40c8-bca4-e08e5ab96032",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "maxTries": 5
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 从 n8n 的上游节点获取所有输入项\nconst inputData = $input.all();\nconst outputItems = [];\n\n// 2. 遍历每个输入项\nfor (const item of inputData) {\n  const originalItem = item.json;\n  \n  if (!originalItem || !originalItem.data) {\n    outputItems.push({ json: { error: \"未找到 'data' 字段\" } });\n    continue;\n  }\n  \n  try {\n    // 3. 解析 data 字段\n    let parsedData = (typeof originalItem.data === 'string') ? JSON.parse(originalItem.data) : originalItem.data;\n    \n    // 4. 检查 matchList\n    if (!parsedData || !parsedData.matchList || !Array.isArray(parsedData.matchList)) {\n      outputItems.push({ json: { error: \"未找到 matchList 数组\" } });\n      continue;\n    }\n    \n    // 5. 提取比赛信息（含关键的 matchId）\n    const matchList = parsedData.matchList;\n    for (const match of matchList) {\n      try {\n        const jcOddsList = match.jcOddsList || {};\n        const oddsList = jcOddsList.oddsList || {};\n        const rqspfOdds = oddsList.RQSPF || {};\n        \n        outputItems.push({\n          json: {\n            \"matchId\": match.matchId, // 【核心修改】提取 ID\n            \"联赛\": match.leagueName || \"未知联赛\",\n            \"matchCode\": match.jcNum || \"未知编号\", // 【新增】提取“周五013”\n            \"比赛时间\": match.matchBeginTime || \"时间未知\",\n            \"主队\": jcOddsList.homeTeamName || \"未知主队\",\n            \"客队\": jcOddsList.awayTeamName || \"未知客队\",\n            \"让球\": rqspfOdds.goalLine || \"0\"\n          }\n        });\n      } catch (matchError) {\n        outputItems.push({ json: { \"联赛\": \"单场数据解析错误\", \"matchId\": match.matchId } });\n      }\n    }\n  } catch (parseError) {\n    outputItems.push({ json: { error: `解析失败: ${parseError.message}` } });\n  }\n}\n\nreturn outputItems;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "39be6708-19b5-4b2f-adee-5baa1bbe5ccd",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 获取输入数据并初始化当前时间\nconst matches = $input.all();\nconst now = new Date(); // 使用系统当前北京时间\n\nconst currentYear = now.getFullYear();\nconst currentMonth0 = now.getMonth(); \nconst currentDate = now.getDate();\n\n// 2. 构建时间判定边界 (用于分桶筛选)\nconst datePrefix = `${currentYear}-${(currentMonth0 + 1).toString().padStart(2,'0')}-${currentDate.toString().padStart(2,'0')}`;\nconst today18 = new Date(`${datePrefix}T18:00:00+08:00`);\nconst today19 = new Date(`${datePrefix}T19:00:00+08:00`);\nconst today22 = new Date(`${datePrefix}T22:00:00+08:00`);\nconst tomorrow05 = new Date(today22.getTime() + 7 * 3600000); \n\nlet allMatches = [];\nlet errorCount = 0;\n\n// 3. 解析比赛时间并进行容错处理\nmatches.forEach((item, index) => {\n  const match = item.json;\n  try {\n    if (!match.比赛时间) throw new Error(\"缺少 '比赛时间' 字段\");\n    \n    const parts = match.比赛时间.split(' ');\n    if (parts.length < 2) throw new Error(`格式非法: ${match.比赛时间}`);\n    \n    const dateParts = parts[0].split('-');\n    const timeParts = parts[1].split(':');\n    \n    const month = parseInt(dateParts[dateParts.length - 2]);\n    const day = parseInt(dateParts[dateParts.length - 1]);\n    const hour = parseInt(timeParts[0]);\n    const minute = parseInt(timeParts[1]);\n    \n    // 跨年年份自动修正\n    let matchYear = currentYear;\n    if (currentMonth0 === 11 && month === 1) matchYear++;\n    if (currentMonth0 === 0 && month === 12) matchYear--;\n\n    // 构造带时区的 ISO 日期对象\n    const matchDateStr = `${matchYear}-${month.toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}T${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}:00+08:00`;\n    const matchDate = new Date(matchDateStr);\n\n    if (isNaN(matchDate.getTime())) throw new Error(\"无效日期\");\n\n    allMatches.push({ ...match, matchDate: matchDate.toISOString() });\n  } catch (error) {\n    errorCount++;\n    console.warn(`[解析跳过] 索引 ${index}: ${error.message}`);\n  }\n});\n\n// 4. 根据比赛时段进行分桶 (用于优先级随机)\nconst b1 = [], b2 = [], b3 = [], b4 = [];\nallMatches.forEach(m => {\n    const d = new Date(m.matchDate);\n    if (d >= today22 && d < tomorrow05) b1.push(m); // 深夜场\n    else if (d >= today19 && d < today22) b2.push(m); // 黄金场\n    else if (d >= today18 && d < today19) b3.push(m); // 傍晚场\n    else b4.push(m); // 其他\n});\n\n// 5. 随机排序并抽取前 4 场比赛\nconst shuffle = (arr) => arr.sort(() => Math.random() - 0.5);\nlet selected = [...shuffle(b1), ...shuffle(b2), ...shuffle(b3), ...shuffle(b4)].slice(0, 4);\n\n// 输出结果日志\nconsole.log(`[执行完成] 已处理 ${matches.length} 场，解析失败 ${errorCount} 场，本次随机输出 ${selected.length} 场。`);\n\nreturn selected.map(match => ({ json: match }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "c561a690-af77-48a1-8cab-4cea54dc2df2",
+      "name": "随机节点"
+    },
+    {
+      "parameters": {
+        "jsCode": "const matches = $input.all().map(item => item.json);\nconst now = new Date();\n// 获取服务器当前的年份\nconst currentYear = now.getFullYear();\n\nconst processedMatches = matches.map(match => {\n    try {\n        // 1. 解析 \"01-08 03:30\" 格式\n        const timeStr = match[\"比赛时间\"].trim();\n        const [datePart, timePart] = timeStr.split(/\\s+/);\n        const [monthStr, dayStr] = datePart.split('-');\n        const [hourStr, minStr] = timePart.split(':');\n\n        const month = parseInt(monthStr, 10);\n        const day = parseInt(dayStr, 10);\n        const hour = parseInt(hourStr, 10);\n        const minute = parseInt(minStr, 10);\n\n        // 2. 确定开赛的具体年份（处理跨年）\n        let matchYear = currentYear;\n        if (now.getMonth() === 11 && month === 1) matchYear++;\n        if (now.getMonth() === 0 && month === 12) matchYear--;\n\n        // 3. 构造比赛的北京时间对象\n        // 注意：这里使用 Date 对象的构造，月分需 -1\n        const kickoffDate = new Date(matchYear, month - 1, day, hour, minute);\n        match.matchDate = kickoffDate.toISOString();\n\n        // 4. 计算预测时间 (scheduledPredictTime)\n        let predictDate = new Date(kickoffDate.getTime());\n        \n        if (hour >= 22) {\n            // 情况 A：今晚 10 点后的比赛 -> 统一在今天 19:00 预测\n            predictDate.setHours(19, 0, 0, 0);\n        } else if (hour >= 0 && hour <= 7) {\n            // 情况 B：次日凌晨 00:00 - 07:00 的比赛 -> 统一在“前一天”的 19:00 预测\n            predictDate.setDate(predictDate.getDate() - 1);\n            predictDate.setHours(19, 0, 0, 0);\n        } else {\n            // 情况 C：其他常规场次 -> 提前 2.5 小时预测\n            predictDate = new Date(kickoffDate.getTime() - 2.5 * 3600000);\n        }\n\n        // 5. 格式化为 ISO 字符串供 Wait 节点使用\n        // 由于服务器是 CST (UTC+8)，设置 19:00 后转换 ISO 会自动变成 UTC 11:00\n        match.scheduledPredictTime = predictDate.toISOString();\n        \n        return match;\n    } catch (e) {\n        match.error = \"解析失败: \" + e.message;\n        match.scheduledPredictTime = new Date().toISOString();\n        return match;\n    }\n});\n\n// === 核心修改：按比赛时间（kickoffDate）升序排序 ===\nprocessedMatches.sort((a, b) => new Date(a.matchDate) - new Date(b.matchDate));\n\nreturn processedMatches.map(m => ({ json: m }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        0
+      ],
+      "id": "d462ef95-6f82-455b-80fc-764da1a03d3a",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO match_tasks (\n    match_id, \n    match_code, \n    home_team, \n    away_team, \n    league_name, \n    match_time, \n    predict_time, \n    raw_data\n) \nVALUES (\n    $1, $2, $3, $4, $5, $6, $7, $8\n)\nON CONFLICT (match_id) \nDO UPDATE SET \n    predict_time = EXCLUDED.predict_time,\n    match_time = EXCLUDED.match_time;",
+        "options": {
+          "queryReplacement": "={{ $json.matchId }},{{ $json.matchCode }},{{ $json.主队 }},{{ $json.客队 }},{{ $json.联赛 }},{{ $json.matchDate }},{{ $json.scheduledPredictTime }},{{ JSON.stringify($json) }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2016,
+        0
+      ],
+      "id": "68c1cb0a-0248-4cac-b1a2-87ca00a459f8",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "pF86czUGQR9pDrjl",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 11,
+              "triggerAtMinute": 20
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3d4a6fb0-da42-4f66-a720-616c6e3a165d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "connectionType": "http"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e60820f8-eb0b-4bdd-82e4-08fad4a28cf4",
+      "name": "MCP Client",
+      "credentials": {
+        "mcpClientHttpApi": {
+          "id": "ng71bL7b3nUrDzQ1",
+          "name": "MCP Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "connectionType": "http",
+        "operation": "executeTool",
+        "toolName": "={{ $json.tools[0].name }}",
+        "toolParameters": "={\n  \"url\": \"https://www.leisu.com/guide\",\n  \"formats\": [\"markdown\"],\n  \"onlyMainContent\": true,\n  \"waitFor\": 3000,\n  \"proxy\": \"stealth\"\n}"
+      },
+      "type": "n8n-nodes-mcp.mcpClient",
+      "typeVersion": 1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "b78ad167-d175-4217-9462-35b880403217",
+      "name": "MCP Client1",
+      "credentials": {
+        "mcpClientHttpApi": {
+          "id": "ng71bL7b3nUrDzQ1",
+          "name": "MCP Client (STDIO) account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. 获取输入数据并初始化输出数组\nconst items = $input.all();\nconst output = [];\n\nfor (const item of items) {\n  try {\n    // 解析 Firecrawl 返回的字符串\n    const rawContentStr = item.json.result.content[0].text;\n    const contentObj = JSON.parse(rawContentStr);\n    const markdown = contentObj.markdown;\n    \n    // 将 Markdown 按行分割\n    const lines = markdown.split('\\n').map(l => l.trim()).filter(l => l !== '');\n    \n    let currentDate = \"\";\n\n    for (let i = 0; i < lines.length; i++) {\n      const line = lines[i];\n      \n      // 匹配日期 (例如: 02-06 星期五)\n      const dateMatch = line.match(/^(\\d{2}-\\d{2})\\s+星期/);\n      if (dateMatch) {\n        currentDate = dateMatch[1];\n        continue;\n      }\n      \n      // 匹配时间点 (例如: 22:25)\n      const timeMatch = line.match(/^(\\d{2}:\\d{2})$/);\n      if (timeMatch && currentDate) {\n        const time = timeMatch[1];\n        \n        let league = \"\", homeName = \"\", homeUrl = \"\", awayName = \"\", awayUrl = \"\", intelligence = \"\", analysis = \"\";\n        \n        // 向下检索比赛详情\n        for (let j = 1; j < 20 && (i + j) < lines.length; j++) {\n          const checkLine = lines[i + j];\n          \n          // 提取联赛\n          if (!league && checkLine.includes('comp-')) {\n            const m = checkLine.match(/\\[(.*?)\\]\\((.*?)\\)/);\n            if (m) league = m[1];\n          }\n          \n          // 提取球队名称和链接\n          if (checkLine.includes('team-')) {\n            const m = checkLine.match(/\\[(.*?)\\]\\((.*?)\\)/);\n            if (m) {\n              if (!homeName) {\n                homeName = m[1];\n                homeUrl = m[2];\n              } else if (!awayName) {\n                awayName = m[1];\n                awayUrl = m[2];\n              }\n            }\n          }\n          \n          // 提取情报和分析链接\n          if (checkLine.includes('[情报]') || checkLine.includes('[分析]')) {\n            const intelMatch = checkLine.match(/\\[情报\\]\\((.*?)\\)/);\n            const analMatch = checkLine.match(/\\[分析\\]\\((.*?)\\)/);\n            if (intelMatch) intelligence = intelMatch[1];\n            if (analMatch) analysis = analMatch[1];\n          }\n\n          // 遇到下一个赛程块则跳出\n          if (lines[i+j+1]?.match(/^\\d{2}:\\d{2}$/) || lines[i+j+1]?.match(/^\\d{2}-\\d{2}\\s+星期/)) {\n            break;\n          }\n        }\n        \n        // --- 核心变化：将数据拆分为独立字段 ---\n        if (homeName && awayName) {\n          output.push({ \n            json: { \n              日期: currentDate,\n              开赛时间: time,\n              联赛: league,\n              主队: homeName,\n              主队链接: homeUrl,\n              客队: awayName,\n              客队链接: awayUrl,\n              情报链接: intelligence,\n              分析链接: analysis\n            } \n          });\n        }\n      }\n    }\n  } catch (e) {\n    console.error(\"解析出错:\", e.message);\n  }\n}\n\nreturn output;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "1ef41862-0e60-46fe-b5b5-295c4bf2bcd5",
+      "name": "清洗雷速列表"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// 目标：将“雷速 guide 列表”与竞彩比赛进行匹配，产出主/客队链接、情报/分析链接等字段\n// 输入：上游为单场比赛 item（来自 调度员 workflow 的比赛列表）\n// 依赖：节点“清洗雷速列表”已输出当天/未来赛程的结构化列表\n\nconst target = $json; // 当前比赛\nconst leisuList = $('清洗雷速列表').all().map(item => item.json);\n\n// 工具函数：剔除足球干扰后缀，提取核心词（轻量容错）\nconst getCore = (name) => {\n  if (!name) return \"\";\n  return name\n    .replace(/[冠赛杯联联赛超级甲级乙级FC联队青年Uu123456789]/g, '')\n    .replace(/\\s+/g,' ')\n    .trim();\n};\n\n// 将 ISO 时间（UTC）转换为北京时间再做字符串对齐\nconst toCST = (d) => new Date(d.getTime() + 8 * 3600000);\n\nconst matchIso = target.matchDate || target.match_time || target.比赛时间 || '';\nconst mDate0 = new Date(matchIso);\nconst mDate = isNaN(mDate0.getTime()) ? null : toCST(mDate0);\n\nlet targetDateStr = \"\";\nlet targetTimeStr = \"\";\n\n// 兼容“01-08 03:30”这种格式\nif (!mDate) {\n  try {\n    const timeStr = (target.比赛时间 || '').trim();\n    const [datePart, timePart] = timeStr.split(/\\s+/);\n    const [monthStr, dayStr] = datePart.split('-');\n    targetDateStr = `${monthStr.padStart(2,'0')}-${dayStr.padStart(2,'0')}`;\n    const [hh, mm] = timePart.split(':');\n    targetTimeStr = `${hh.padStart(2,'0')}:${mm.padStart(2,'0')}`;\n  } catch (e) {}\n} else {\n  targetDateStr = `${(mDate.getUTCMonth() + 1).toString().padStart(2,'0')}-${mDate.getUTCDate().toString().padStart(2,'0')}`;\n  targetTimeStr = `${mDate.getUTCHours().toString().padStart(2,'0')}:${mDate.getUTCMinutes().toString().padStart(2,'0')}`;\n}\n\nconst coreLeague = getCore(target.league_name || target.联赛 || target.leagueName || '');\nconst coreHome = getCore(target.home_team || target.主队 || '');\nconst coreAway = getCore(target.away_team || target.客队 || '');\n\n// 选择最佳匹配（不是 find 第一个就停，而是取最高分）\nlet best = null;\nlet bestScore = 0;\n\nfor (const leisu of leisuList) {\n  // 1) 强制条件：日期和时间必须一致\n  if (leisu.日期 !== targetDateStr || leisu.开赛时间 !== targetTimeStr) continue;\n\n  let score = 0;\n\n  // 2) 联赛比对 (权重: 0.4)\n  const l2 = getCore(leisu.联赛 || '');\n  if (coreLeague && l2 && (coreLeague === l2 || coreLeague.includes(l2) || l2.includes(coreLeague))) score += 0.4;\n\n  // 3) 球队比对 (每队权重: 0.3, 总计 0.6)\n  const h2 = getCore(leisu.主队 || '');\n  const a2 = getCore(leisu.客队 || '');\n\n  if (coreHome && h2 && (coreHome === h2 || coreHome.includes(h2) || h2.includes(coreHome))) score += 0.3;\n  if (coreAway && a2 && (coreAway === a2 || coreAway.includes(a2) || a2.includes(coreAway))) score += 0.3;\n\n  if (score > bestScore) {\n    bestScore = score;\n    best = leisu;\n  }\n}\n\n// 判定：总分 >= 0.7 视为成功（时间已对齐 + 至少命中“联赛+1队”或“两队”）\nif (best && bestScore >= 0.7) {\n  return {\n    json: {\n      ...target,\n      ...best,\n      匹配状态: \"成功\",\n      匹配得分: bestScore\n    }\n  };\n}\n\nreturn {\n  json: {\n    ...target,\n    匹配状态: \"失败\",\n    匹配得分: bestScore,\n    失败原因: `分值未达标或未找到同开赛时间赛程：${targetDateStr} ${targetTimeStr} ${target.home_team || target.主队 || ''} vs ${target.away_team || target.客队 || ''}`\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        0
+      ],
+      "id": "a40ee438-c067-4cca-830a-87ff04ebeac7",
+      "name": "匹配球队"
+    }
+  ],
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "随机节点",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "随机节点": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "匹配球队",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "MCP Client",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client": {
+      "main": [
+        [
+          {
+            "node": "MCP Client1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client1": {
+      "main": [
+        [
+          {
+            "node": "清洗雷速列表",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "清洗雷速列表": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "匹配球队": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "triggerCount": 1,
+  "versionId": "d579c134-25f3-41f9-9793-c5759974f339",
+  "owner": {
+    "type": "personal",
+    "projectId": "4gZXsoo5v3SNQN13",
+    "projectName": "卷梦 书 <3424771506@qq.com>",
+    "personalEmail": "3424771506@qq.com"
+  },
+  "parentFolderId": null,
+  "isArchived": false
+}
